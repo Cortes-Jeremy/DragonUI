@@ -40,7 +40,7 @@ local function setClassPortrait()
 
     -- DragonUI's HD class icons are square art, so they need the same inset as the face.
     if addon.UF and addon.UF.ApplyClassPortraitIcon then
-        if addon.UF.ApplyClassPortraitIcon(p, classFile, true) then
+        if addon.UF.ApplyClassPortraitIcon(p, classFile, true, "player") then
             applySquareArt(p, cf)
             p._duiMode = "class"
             return

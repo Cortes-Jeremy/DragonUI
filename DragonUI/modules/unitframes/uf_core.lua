@@ -94,6 +94,7 @@ UF.TEXTURES = {
 
     -- Shared class icon texture (used by class portrait system)
     CLASS_ICON_ALTERNATIVE_PREFIX = "Interface\\AddOns\\DragonUI\\Textures\\ClassIcons\\",
+    CLASS_ICON_ALTERNATIVE_PREFIX_PLAYER = "Interface\\AddOns\\DragonUI\\Textures\\ClassIcons\\Player\\",
     CLASS_ICON_ALTERNATIVE_SUFFIX = ".blp",
     CLASS_ICON = "Interface\\TargetingFrame\\UI-Classes-Circles",
 }
@@ -271,7 +272,7 @@ function UF.UseAlternativeClassIcons(unitKey)
     return config and config.classPortrait and config.alternativeClassIcons or false
 end
 
-function UF.ApplyClassPortraitIcon(icon, classFileName, useAlternative)
+function UF.ApplyClassPortraitIcon(icon, classFileName, useAlternative, unit)
     if not icon or not classFileName then
         return false
     end
@@ -284,10 +285,11 @@ function UF.ApplyClassPortraitIcon(icon, classFileName, useAlternative)
     end
 
     if useAlternative then
-        icon:SetTexture(
-            UF.TEXTURES.CLASS_ICON_ALTERNATIVE_PREFIX
-            .. classFileName
-            .. UF.TEXTURES.CLASS_ICON_ALTERNATIVE_SUFFIX)
+        if unit == "player" then
+            icon:SetTexture( UF.TEXTURES.CLASS_ICON_ALTERNATIVE_PREFIX_PLAYER .. classFileName .. UF.TEXTURES.CLASS_ICON_ALTERNATIVE_SUFFIX)
+        else
+            icon:SetTexture( UF.TEXTURES.CLASS_ICON_ALTERNATIVE_PREFIX .. classFileName .. UF.TEXTURES.CLASS_ICON_ALTERNATIVE_SUFFIX)
+        end
         icon:SetTexCoord(0, 1, 0, 1)
         return true
     end
@@ -319,7 +321,7 @@ function UF.ApplyClassPortraitToTexture(unit, portraitTexture, useAlternative)
         return false
     end
 
-    if UF.ApplyClassPortraitIcon(portraitTexture, classFileName, useAlternative) then
+    if UF.ApplyClassPortraitIcon(portraitTexture, classFileName, useAlternative, unit) then
         portraitTexture:SetAlpha(1)
         return true
     end
