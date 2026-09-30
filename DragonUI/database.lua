@@ -352,7 +352,7 @@ local defaults = {
                 invert_order = false,
             },
 
-            -- Normal colored icons configuration  
+            -- Normal colored icons configuration
             normal = {
                 scale_menu = 0.9,
                 x_position = -113,
@@ -522,7 +522,7 @@ local defaults = {
             visibility_logic = "and",
         },
 
-        --  BUFFS SETTINGS 
+        --  BUFFS SETTINGS
         buffs = {
             enabled = true,
             show_toggle_button = true,
@@ -632,7 +632,7 @@ local defaults = {
                 show_rest_glow = true, -- Show golden glow when resting (inn/city)
                 combat_flash_enabled = true, -- Enable combat flash pulse animation
                 combat_flash_opacity = 1.0, -- Opacity multiplier for combat flash (0.0 - 1.0)
-                fat_healthbar = false, -- Full-width health bar 
+                fat_healthbar = false, -- Full-width health bar
                 fat_manabar_width = 200,
                 fat_manabar_height = 8,
                 fat_manabar_hidden = false,
@@ -653,6 +653,7 @@ local defaults = {
             },
             target = {
                 classcolor = false,
+                reactioncolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
                 breakUpLargeNumbers = true,
@@ -669,6 +670,7 @@ local defaults = {
             },
             focus = {
                 classcolor = false,
+                reactioncolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
                 breakUpLargeNumbers = true,
@@ -719,6 +721,7 @@ local defaults = {
             },
             tot = {
                 classcolor = false,
+                reactioncolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
                 scale = 1.0,
@@ -731,6 +734,7 @@ local defaults = {
             },
             fot = {
                 classcolor = false,
+                reactioncolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
                 scale = 1.0,

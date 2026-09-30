@@ -265,7 +265,7 @@ function UF.SmallFrame.Create(opts)
                 local texturePath
 
                 -- Class color health bar
-                if config.classcolor and UnitIsPlayer(opts.unitToken) then
+                if config.classcolor and UnitIsPlayer(opts.unitToken) or config.reactioncolor then
                     texturePath = UF.TEXTURES.smallStyle.BAR_PREFIX .. "Health-Status"
                 else
                     texturePath = UF.TEXTURES.smallStyle.BAR_PREFIX .. "Health"
@@ -293,6 +293,8 @@ function UF.SmallFrame.Create(opts)
                     else
                         texture:SetVertexColor(1, 1, 1)
                     end
+                elseif config.reactioncolor then
+                    texture:SetVertexColor(UF.GetHealthColor(opts.unitToken, false))
                 else
                     texture:SetVertexColor(1, 1, 1)
                 end
@@ -572,6 +574,8 @@ function UF.SmallFrame.Create(opts)
                 else
                     texture:SetVertexColor(1, 1, 1, 1)
                 end
+            elseif config.reactioncolor then
+                texture:SetVertexColor(UF.GetHealthColor(opts.unitToken, false))
             else
                 texture:SetVertexColor(1, 1, 1, 1)
             end

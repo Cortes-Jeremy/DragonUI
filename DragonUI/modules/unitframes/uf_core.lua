@@ -350,6 +350,48 @@ end
 
 
 -- ============================================================================
+-- HEALTH BAR COLOR (class color > tapped > reaction)
+-- ============================================================================
+
+UF.STATUS_COLORS = {
+    hostile  = { 1.0, 0.1, 0.1 },  -- rouge
+    neutral  = { 1.0, 0.9, 0.1 },  -- jaune
+    friendly = { 0.1, 0.9, 0.1 },  -- vert
+    tapped   = { 0.5, 0.5, 0.5 },  -- gris
+}
+
+local UnitIsPlayer, UnitClass = UnitIsPlayer, UnitClass
+local UnitIsTapped, UnitIsTappedByPlayer = UnitIsTapped, UnitIsTappedByPlayer
+local UnitReaction, UnitCanAttack = UnitReaction, UnitCanAttack
+local RAID_CLASS_COLORS = RAID_CLASS_COLORS
+local STATUS_COLORS = UF.STATUS_COLORS
+
+function UF.GetHealthColor(unit, useClassColor)
+    if useClassColor and UnitIsPlayer(unit) then
+        local _, class = UnitClass(unit)
+        local c = class and RAID_CLASS_COLORS[class]
+        if c then return c.r, c.g, c.b end
+    end
+
+    local c
+    if UnitIsTapped(unit) and not UnitIsTappedByPlayer(unit) then
+        c = STATUS_COLORS.tapped
+    else
+        local reaction = UnitReaction(unit, "player")
+        if reaction then
+            c = (reaction <= 3 and STATUS_COLORS.hostile)
+                or (reaction == 4 and STATUS_COLORS.neutral)
+                or STATUS_COLORS.friendly
+        else
+            c = UnitCanAttack("player", unit)
+                and STATUS_COLORS.hostile or STATUS_COLORS.friendly
+        end
+    end
+    return c[1], c[2], c[3]
+end
+
+
+-- ============================================================================
 -- BAR HOOK HELPERS
 -- ============================================================================
 

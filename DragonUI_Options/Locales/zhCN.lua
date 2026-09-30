@@ -685,6 +685,8 @@ L["Party"] = "小队"
 
 -- 通用选项
 L["Class Color Health"] = "生命条职业颜色"
+L["Reaction Color Health"] = "按关系着色生命条"
+L["Colors the health bar by reaction: red = hostile, yellow = neutral, green = friendly, grey = tapped. Class color takes priority for players when enabled."] = "根据阵营关系为生命条着色：红色 = 敌对，黄色 = 中立，绿色 = 友好，灰色 = 已被他人攻击。启用职业颜色时，玩家优先使用职业颜色。"
 L["Class Portrait"] = "职业头像"
 L["Class icon instead of 3D model for players."] = "玩家头像使用职业图标而非3D模型。"
 L["Alternative Class Icons"] = "替代职业图标"

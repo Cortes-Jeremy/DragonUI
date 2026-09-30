@@ -137,6 +137,15 @@ local function AddCommonControls(parent, unitKey, refreshFunc, opts)
         callback = refreshFunc,
     })
 
+    if opts.hasReactionColor then
+        C:AddToggle(parent, {
+            label = LO["Reaction Color Health"],
+            desc = LO["Colors the health bar by reaction: red = hostile, yellow = neutral, green = friendly, grey = tapped. Class color takes priority for players when enabled."],
+            dbPath = "unitframe." .. unitKey .. ".reactioncolor",
+            callback = refreshFunc,
+        })
+    end
+
     if opts.hasClassPortrait then
         C:AddToggle(parent, {
             label = LO["Class Portrait"],
@@ -392,6 +401,7 @@ local function BuildTargetSection(scroll)
     local s = C:AddSection(scroll, LO["Target Frame"])
     AddCommonControls(s, "target", refreshTarget, {
         hasClassPortrait = true,
+        hasReactionColor = true,
     })
 
     C:AddToggle(s, {
@@ -419,6 +429,7 @@ local function BuildFocusSection(scroll)
     local s = C:AddSection(scroll, LO["Focus Frame"])
     AddCommonControls(s, "focus", refreshFocus, {
         hasClassPortrait = true,
+        hasReactionColor = true,
     })
 
     C:AddToggle(s, {
@@ -573,6 +584,12 @@ local function BuildToTSection(scroll)
     })
 
     C:AddToggle(tot, {
+        label = LO["Reaction Color Health"],
+        dbPath = "unitframe.tot.reactioncolor",
+        callback = refreshToT,
+    })
+
+    C:AddToggle(tot, {
         label = LO["Class Portrait"],
         dbPath = "unitframe.tot.classPortrait",
         callback = function(value)
@@ -632,6 +649,12 @@ local function BuildToTSection(scroll)
     C:AddToggle(fot, {
         label = LO["Class Color Health"],
         dbPath = "unitframe.fot.classcolor",
+        callback = refreshToF,
+    })
+
+    C:AddToggle(fot, {
+        label = LO["Reaction Color Health"],
+        dbPath = "unitframe.fot.reactioncolor",
         callback = refreshToF,
     })
 

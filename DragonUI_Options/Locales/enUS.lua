@@ -835,6 +835,8 @@ L["Party"] = true
 
 -- Common options
 L["Class Color Health"] = true
+L["Reaction Color Health"] = true
+L["Colors the health bar by reaction: red = hostile, yellow = neutral, green = friendly, grey = tapped. Class color takes priority for players when enabled."] = true
 L["Class icon instead of 3D model for players."] = true
 L["Alternative Class Icons"] = true
 L["Use DragonUI alternative class icons instead of Blizzard's class icon atlas."] = true

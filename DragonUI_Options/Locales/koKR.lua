@@ -735,6 +735,8 @@ L["Party"] = "파티"
 
 -- Common options
 L["Class Color Health"] = "생명력 바 직업 색상"
+L["Reaction Color Health"] = "반응에 따른 생명력 색상"
+L["Colors the health bar by reaction: red = hostile, yellow = neutral, green = friendly, grey = tapped. Class color takes priority for players when enabled."] = "반응에 따라 생명력 바의 색상을 변경합니다: 빨강 = 적대, 노랑 = 중립, 초록 = 우호, 회색 = 다른 플레이어가 선점. 활성화한 경우 플레이어는 직업 색상이 우선 적용됩니다."
 L["Class Portrait"] = "직업 초상화"
 L["Class icon instead of 3D model for players."] = "플레이어 초상화에 3D 모델 대신 직업 아이콘을 사용."
 L["Alternative Class Icons"] = "대체 직업 아이콘"

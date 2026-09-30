@@ -116,6 +116,8 @@ local api = UF.TargetStyle.Create({
         "UNIT_LEVEL",
         "UNIT_NAME_UPDATE",
         "UNIT_PORTRAIT_UPDATE",
+        "UNIT_FACTION",
+        "UNIT_DYNAMIC_FLAGS",
     },
 
     -- Feature flags
@@ -163,6 +165,9 @@ local api = UF.TargetStyle.Create({
             UpdateClassification()
             UpdateHealthBarColor()
             if textSystem then textSystem.update() end
+        elseif event == "UNIT_FACTION"
+            or event == "UNIT_DYNAMIC_FLAGS" then
+            UpdateHealthBarColor()
         elseif event == "UNIT_LEVEL"
             or event == "UNIT_NAME_UPDATE" then
             UpdateClassification()

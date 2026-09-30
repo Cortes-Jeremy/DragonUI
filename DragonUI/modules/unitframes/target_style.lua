@@ -320,11 +320,11 @@ function UF.TargetStyle.Create(opts)
             updateCache.lastColorFrame = now
         end
 
-        isUpdatingColor = true
-
         local config  = GetConfig()
         local texture = HealthBar:GetStatusBarTexture()
         if not texture then return end
+
+        isUpdatingColor = true
 
         if config.classcolor and UnitIsPlayer(unitToken) then
             local statusPath = TEXTURES.BAR_PREFIX .. "Health-Status"
@@ -340,12 +340,24 @@ function UF.TargetStyle.Create(opts)
                 texture:SetVertexColor(1, 1, 1, 1)
             end
         else
-            local normalPath = TEXTURES.BAR_PREFIX .. "Health"
-            if texture:GetTexture() ~= normalPath then
-                texture:SetTexture(normalPath)
-                texture:SetDrawLayer("ARTWORK", 1)
+            if config.reactioncolor then
+                -- reaction color / tapped
+                local statusPath = TEXTURES.BAR_PREFIX .. "Health-Status"
+                if texture:GetTexture() ~= statusPath then
+                    texture:SetTexture(statusPath)
+                    texture:SetDrawLayer("ARTWORK", 1)
+                end
+                local r, g, b = UF.GetHealthColor(unitToken, false)
+                texture:SetVertexColor(r, g, b, 1)
+            else
+                -- original behavior
+                local normalPath = TEXTURES.BAR_PREFIX .. "Health"
+                if texture:GetTexture() ~= normalPath then
+                    texture:SetTexture(normalPath)
+                    texture:SetDrawLayer("ARTWORK", 1)
+                end
+                texture:SetVertexColor(1, 1, 1, 1)
             end
-            texture:SetVertexColor(1, 1, 1, 1)
         end
 
         isUpdatingColor = false

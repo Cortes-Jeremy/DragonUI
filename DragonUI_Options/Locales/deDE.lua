@@ -731,6 +731,8 @@ L["Party"] = "Gruppe"
 
 -- Common options
 L["Class Color Health"] = "Leben nach Klassenfarbe"
+L["Reaction Color Health"] = "Lebensfarbe nach Reaktion"
+L["Colors the health bar by reaction: red = hostile, yellow = neutral, green = friendly, grey = tapped. Class color takes priority for players when enabled."] = "Färbt die Lebensleiste nach Reaktion: Rot = feindlich, Gelb = neutral, Grün = freundlich, Grau = von anderen angegriffen. Die Klassenfarbe hat bei Spielern Vorrang, wenn sie aktiviert ist."
 L["Class Portrait"] = "Klassenporträt"
 L["Class icon instead of 3D model for players."] = "Klassenicon statt 3D-Modell bei Spielern."
 L["Alternative Class Icons"] = "Alternative Klassenicons"

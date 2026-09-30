@@ -727,6 +727,8 @@ L["Party"] = "Группа"
 
 -- Common options
 L["Class Color Health"] = "Полоса здоровья по классу"
+L["Reaction Color Health"] = "Цвет здоровья по отношению"
+L["Colors the health bar by reaction: red = hostile, yellow = neutral, green = friendly, grey = tapped. Class color takes priority for players when enabled."] = "Окрашивает полосу здоровья в зависимости от отношения: красный — враждебный, жёлтый — нейтральный, зелёный — дружественный, серый — уже атакован другим игроком. Цвет класса имеет приоритет для игроков, если он включён."
 L["Class Portrait"] = "Портрет класса"
 L["Class icon instead of 3D model for players."] = "Значок класса вместо 3D-модели для игроков."
 L["Alternative Class Icons"] = "Альтернативные значки классов"
