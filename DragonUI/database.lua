@@ -166,6 +166,9 @@ local defaults = {
                 posY = 20,
                 tooltip_position = "TOP"
             },
+            durability = {
+                custom_position = false
+            },
             tooltip = {
                 anchor = "BOTTOMRIGHT",
                 posX = -90,
@@ -861,7 +864,7 @@ local defaults = {
             auraborders = {
                 enabled = true, -- Modern DF-style borders on buff/debuff icons (player/target/focus)
                 buff_color = { r = 0.2, g = 0.2, b = 0.2 }, -- neutral buff chrome over white mask; debuffs use dispel-type color
-                custom_border = true, -- border style: true = rounded (custom texture overlay), false = square (solid lines)
+                border_style = "detailed", -- "detailed" (action-bar art), "rounded" (tinted white frame) or "square" (solid lines)
                 -- When true, login ApplyDarkMode must not overwrite buff_color (user set it in Auras).
                 buff_color_user_override = false,
             },
