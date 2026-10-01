@@ -379,9 +379,15 @@ function UF.GetHealthColor(unit, useClassColor)
     else
         local reaction = UnitReaction(unit, "player")
         if reaction then
-            c = (reaction <= 3 and STATUS_COLORS.hostile)
-                or (reaction == 4 and STATUS_COLORS.neutral)
-                or STATUS_COLORS.friendly
+            if reaction <= 3 then
+                c = STATUS_COLORS.hostile
+            elseif reaction == 4 then
+                -- Neutre : rouge dès qu'il est sur ta table de menace (même logique que les nameplates)
+                local _, status = UnitDetailedThreatSituation("player", unit)
+                c = (status ~= nil) and STATUS_COLORS.hostile or STATUS_COLORS.neutral
+            else
+                c = STATUS_COLORS.friendly
+            end
         else
             c = UnitCanAttack("player", unit)
                 and STATUS_COLORS.hostile or STATUS_COLORS.friendly
