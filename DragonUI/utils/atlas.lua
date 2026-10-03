@@ -125,12 +125,13 @@ local retailHudSheets = {
 		{ "ui-hud-actionbar-pagedownarrow-normal", 14, 12, 463, 497, 605, 633 },
 		{ "ui-hud-actionbar-pagedownarrow-pushed", 14, 12, 463, 497, 545, 573 },
 		{ "ui-hud-actionbar-pagedownarrow-highlight", 14, 12, 463, 497, 575, 603 },
-		{ "ui-hud-actionbar-frame-nineslice-cornerbottomleft", 20, 20, 465, 499, 383, 429 },
-		{ "ui-hud-actionbar-frame-nineslice-cornerbottomright", 20, 20, 465, 509, 335, 381 },
-		{ "ui-hud-actionbar-frame-nineslice-cornertopleft", 20, 20, 463, 497, 475, 507 },
-		{ "ui-hud-actionbar-frame-nineslice-cornertopright", 20, 20, 463, 507, 441, 473 },
-		{ "_ui-hud-actionbar-frame-nineslice-edgetop", 506, 20, 0, 32, 145, 177, true, false },
-		{ "_ui-hud-actionbar-frame-nineslice-edgebottom", 506, 20, 0, 32, 97, 143, true, false },
+		-- Native 1x sizes: one shared 20x20 squashed each piece, and so each rail, by a different amount.
+		{ "ui-hud-actionbar-frame-nineslice-cornerbottomleft", 17, 23, 465, 499, 383, 429 },
+		{ "ui-hud-actionbar-frame-nineslice-cornerbottomright", 22, 23, 465, 509, 335, 381 },
+		{ "ui-hud-actionbar-frame-nineslice-cornertopleft", 17, 16, 463, 497, 475, 507 },
+		{ "ui-hud-actionbar-frame-nineslice-cornertopright", 22, 16, 463, 507, 441, 473 },
+		{ "_ui-hud-actionbar-frame-nineslice-edgetop", 506, 16, 0, 32, 145, 177, true, false },
+		{ "_ui-hud-actionbar-frame-nineslice-edgebottom", 506, 23, 0, 32, 97, 143, true, false },
 		-- Deliberately rect-less; the action-bar border's centre piece uses it exactly like this.
 		{ "ui-hud-actionbar-frame-nineslice-center", 0, 0 },
 		{ "ui-hud-actionbar-frame-divider-threeslice-edgebottom", 14, 12, 395, 419, 833, 863 },
@@ -141,10 +142,11 @@ local retailHudSheets = {
 		{ "ui-hud-actionbar-gryphon-flying-right", 80, 103, 1, 157, 539, 732 },
 	}),
 	sheet(uiactionbar2x_new, 512, 2048, {
-		{ "ui-hud-actionbar-gryphon-thick-left", 104.5, 96, 1, 357, 209, 543 },
-		{ "ui-hud-actionbar-gryphon-thick-right", 104.5, 96, 1, 357, 545, 879 },
-		{ "ui-hud-actionbar-wyvern-thick-left", 104.5, 96, 1, 357, 881, 1215 },
-		{ "ui-hud-actionbar-wyvern-thick-right", 104.5, 96, 1, 357, 1217, 1551 },
+		-- Retail draws these at 104.5x98 (MainActionBar.xml EndCaps), true to the 356x334 cells.
+		{ "ui-hud-actionbar-gryphon-thick-left", 104.5, 98, 1, 357, 209, 543 },
+		{ "ui-hud-actionbar-gryphon-thick-right", 104.5, 98, 1, 357, 545, 879 },
+		{ "ui-hud-actionbar-wyvern-thick-left", 104.5, 98, 1, 357, 881, 1215 },
+		{ "ui-hud-actionbar-wyvern-thick-right", 104.5, 98, 1, 357, 1217, 1551 },
 		{ "ui-hud-actionbar-iconframe", 64, 64, 359, 451, 649, 739 },
 		{ "_ui-hud-actionbar-iconborder-checked", 64, 64, 359, 451, 881, 971 },
 		{ "_ui-hud-actionbar-iconborder-pushed", 64, 64, 359, 451, 881, 971 },
@@ -237,8 +239,8 @@ local retailHudSheets = {
 		{ "bag-reagent-border-2x", nil, nil, 3, 63, 64, 125 },
 	}),
 	sheet(uiactionbarvertical2x, 256, 64, {
-		{ "!ui-hud-actionbar-frame-nineslice-edgeleft", 20, 20, 143, 177, 0, 32, false, true },
-		{ "!ui-hud-actionbar-frame-nineslice-edgeright", 20, 20, 97, 141, 0, 32, false, true },
+		{ "!ui-hud-actionbar-frame-nineslice-edgeleft", 17, 16, 143, 177, 0, 32, false, true },
+		{ "!ui-hud-actionbar-frame-nineslice-edgeright", 22, 16, 97, 141, 0, 32, false, true },
 		{ "!ui-hud-actionbar-frame-divider-threeslice-center", 14, 18, 179, 203, 0, 32 },
 	}),
 	sheet(uiactionbar, 256, 1024, {
@@ -698,8 +700,9 @@ local atlasinfo = {
 	['questcollapse-show-down'] = { rui_MapCollapse, 32, 32, 32/256, 64/256, 0, 32/128 },
 	['questcollapse-hide-up'] = { rui_MapCollapse, 32, 32, 0, 32/256, 32/128, 64/128 },
 	['questcollapse-hide-down'] = { rui_MapCollapse, 32, 32, 32/256, 64/256, 32/128, 64/128 },
-	['mapcornershadow-right'] = { rui_MapCollapse, 46, 53, 64/256, 110/256, 0, 53/128 },
-	['mapcornershadow-left'] = { rui_MapCollapse, 182, 30, 0, 182/256, 64/128, 94/128 },
+	-- One texel off the button cells: bilinear filtering bled their opaque edge in as a thin line.
+	['mapcornershadow-right'] = { rui_MapCollapse, 45, 53, 65/256, 110/256, 0, 53/128 },
+	['mapcornershadow-left'] = { rui_MapCollapse, 182, 29, 0, 182/256, 65/128, 94/128 },
 
 	-- Talents (Textures/Talents/): node frames, footer and war mode pieces share one sheet (retail 4556093).
 	['talents-background-bottombar-left'] = { rui_TalentsPack, 806, 82, 3/1024, 809/1024, 209/512, 291/512 },
