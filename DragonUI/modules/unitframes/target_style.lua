@@ -782,6 +782,33 @@ function UF.TargetStyle.Create(opts)
     end
 
     -- ================================================================
+    -- PVP ICON
+    -- ================================================================
+
+    local pvpBadge
+
+    -- Runs after TargetFrame_CheckFaction, the only code that shows the icon; a small focus clears showPVP.
+    local function ApplyPvPIconVisibility()
+        local pvpIcon = BlizzFrame.pvpIcon
+        if not pvpIcon then return end
+        local config = GetConfig()
+        local kind = BlizzFrame.showPVP and UnitExists(unitToken) and UF.GetPvPKind(unitToken)
+        local shown = kind and config.show_pvp_icon ~= false
+        if not pvpBadge then
+            -- Same frame as Blizzard's icon, so it draws over the portrait the same way.
+            pvpBadge = UF.CreatePvPBadge(pvpIcon:GetParent())
+            -- Same gap to the gold ring as the player badge: this ring is flush with the portrait, the player's sits ~5 px out.
+            pvpBadge:SetPoint("TOP", Portrait, "RIGHT", 4.1, 7.4)
+        end
+        local onBadge = shown and config.pvp_icon_style == "forever" and UF.ShowPvPBadge(pvpBadge, kind)
+        if not onBadge then
+            pvpBadge:Hide()
+        end
+        -- Alpha only: TargetFrame_CheckFaction owns Show/Hide, including the small focus that never shows it.
+        pvpIcon:SetAlpha((shown and not onBadge) and 1 or 0)
+    end
+
+    -- ================================================================
     -- FRAME INITIALIZATION
     -- ================================================================
 
@@ -995,6 +1022,15 @@ function UF.TargetStyle.Create(opts)
                 end
             end)
             BlizzFrame.DragonUI_ClassificationHook = true
+        end
+
+        if not BlizzFrame.DragonUI_PvPIconHook then
+            hooksecurefunc("TargetFrame_CheckFaction", function(self)
+                if self == BlizzFrame then
+                    ApplyPvPIconVisibility()
+                end
+            end)
+            BlizzFrame.DragonUI_PvPIconHook = true
         end
 
         -- ---- Apply config (scale + position) ----
@@ -1408,6 +1444,7 @@ function UF.TargetStyle.Create(opts)
             if Module.textSystem then Module.textSystem.update() end
         end
 
+        ApplyPvPIconVisibility()
         SyncVisibilityFade()
     end
 

@@ -33,6 +33,11 @@ local dragonValues = {
     rareelite = LO["RareElite (Winged)"],
 }
 
+local pvpIconStyleValues = {
+    classic = LO["Classic"],
+    forever = LO["Forever"],
+}
+
 local alternateManaFormatValues = {
     numeric    = LO["Current Value"],
     formatted  = LO["Current / Max"],
@@ -213,6 +218,19 @@ local function BuildPlayerSection(scroll)
         label = LO["Dragon Decoration"],
         dbPath = "unitframe.player.dragon_decoration",
         values = dragonValues,
+        callback = refreshPlayer,
+    })
+
+    C:AddToggle(s, {
+        label = LO["Show PvP Icon"],
+        dbPath = "unitframe.player.show_pvp_icon",
+        callback = refreshPlayer,
+    })
+
+    C:AddDropdown(s, {
+        label = LO["PvP Icon Style"],
+        dbPath = "unitframe.player.pvp_icon_style",
+        values = pvpIconStyleValues,
         callback = refreshPlayer,
     })
 
@@ -411,6 +429,19 @@ local function BuildTargetSection(scroll)
         callback = refreshTarget,
     })
 
+    C:AddToggle(s, {
+        label = LO["Show PvP Icon"],
+        dbPath = "unitframe.target.show_pvp_icon",
+        callback = refreshTarget,
+    })
+
+    C:AddDropdown(s, {
+        label = LO["PvP Icon Style"],
+        dbPath = "unitframe.target.pvp_icon_style",
+        values = pvpIconStyleValues,
+        callback = refreshTarget,
+    })
+
     C:AddHeading(s, LO["Visibility"])
     C:AddDescription(s, LO["Also fades the Target of Target and target cast bar, attached or not."])
     C:AddVisibilityFadeToggles(s, {
@@ -436,6 +467,19 @@ local function BuildFocusSection(scroll)
         label = LO["Show Name Background"],
         desc = LO["Show the colored name background behind the focus name."],
         dbPath = "unitframe.focus.show_name_background",
+        callback = refreshFocus,
+    })
+
+    C:AddToggle(s, {
+        label = LO["Show PvP Icon"],
+        dbPath = "unitframe.focus.show_pvp_icon",
+        callback = refreshFocus,
+    })
+
+    C:AddDropdown(s, {
+        label = LO["PvP Icon Style"],
+        dbPath = "unitframe.focus.pvp_icon_style",
+        values = pvpIconStyleValues,
         callback = refreshFocus,
     })
 
