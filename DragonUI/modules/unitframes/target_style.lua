@@ -400,7 +400,7 @@ function UF.TargetStyle.Create(opts)
             end
             NameText:SetPoint("LEFT", frameElements.background, "TOPLEFT", name.x, name.y)
             NameText:SetWidth(name.w)
-            NameText:SetJustifyH("LEFT")
+            NameText:SetJustifyH(UF.GetNameSpotJustify())
         else
             NameText:SetPoint("BOTTOM", HealthBar, "TOP", 10, 3)
             if nameHome then
@@ -731,6 +731,11 @@ function UF.TargetStyle.Create(opts)
         frameElements.elite:Show()
     end
 
+    -- The editor previews an elite on the target, whose dragons are what the style edits, and none elsewhere.
+    local function PreviewDragon()
+        ShowDragon(configKey == "target" and "elite" or nil)
+    end
+
     local function UpdateClassification()
         local raidTargetIcon = _G[namePrefix .. "FrameTextureFrameRaidTargetIcon"]
         if raidTargetIcon and raidTargetIcon.SetDrawLayer then
@@ -740,6 +745,11 @@ function UF.TargetStyle.Create(opts)
         local pvpIcon = _G[namePrefix .. "FrameTextureFramePVPIcon"]
         if pvpIcon and pvpIcon.SetDrawLayer then
             pvpIcon:SetDrawLayer("OVERLAY", 7)
+        end
+
+        if frameElements.elite and addon.TextSystem.IsEditorActive() then
+            PreviewDragon()
+            return
         end
 
         if not UnitExists(unitToken) or not frameElements.elite then
@@ -804,7 +814,11 @@ function UF.TargetStyle.Create(opts)
                         UpdateClassification()
                     end
                 elseif frameElements.elite then
-                    frameElements.elite:Hide()
+                    if addon.TextSystem.IsEditorActive() then
+                        PreviewDragon()
+                    else
+                        frameElements.elite:Hide()
+                    end
                 end
 
                 if self.passes >= self.maxPasses then
@@ -874,11 +888,16 @@ function UF.TargetStyle.Create(opts)
         if not pvpIcon then return end
         local config = GetConfig()
         local kind = BlizzFrame.showPVP and UnitExists(unitToken) and UF.GetPvPKind(unitToken)
+        local fake = not UnitExists(unitToken) and addon.TextSystem.IsEditorActive()
+        if fake then
+            -- No real unit to flag, so the editor shows the player's faction emblem.
+            kind = BlizzFrame.showPVP ~= false and (UnitFactionGroup("player") or "Alliance") or nil
+        end
         local shown = kind and config.show_pvp_icon ~= false
         UF.ApplyClassicPvPTexture(pvpIcon, kind)
         if not pvpBadge then
             -- Same frame as Blizzard's icon, so it draws over the portrait the same way.
-            pvpBadge = UF.CreatePvPBadge(pvpIcon:GetParent())
+            pvpBadge = UF.CreatePvPBadge(pvpIcon:GetParent(), "DragonUI_" .. namePrefix .. "PvPCircle")
         end
         local badge = UF.GetFrameSkin().target.pvp
         pvpBadge:ClearAllPoints()
@@ -890,6 +909,26 @@ function UF.TargetStyle.Create(opts)
         end
         -- Alpha only: TargetFrame_CheckFaction owns Show/Hide, including the small focus that never shows it.
         pvpIcon:SetAlpha((shown and not onBadge) and 1 or 0)
+        if fake then pvpIcon:Show() end
+    end
+
+    -- ================================================================
+    -- THREAT FLASH
+    -- ================================================================
+
+    -- Show/Hide and color stay with UnitFrame_UpdateThreatIndicator.
+    local function ApplyThreatFlash()
+        local flash = BlizzFrame.threatIndicator
+        if not flash or not frameElements.eliteFrame then return end
+        -- On eliteFrame like retail's: over the border, under the elite dragon.
+        flash:SetParent(frameElements.eliteFrame)
+        flash:SetDrawLayer("BACKGROUND")
+        flash:SetTexture(TEXTURES.THREAT)
+        flash:SetTexCoord(0, 376/512, 0, 134/256)
+        local spot = UF.GetFrameSkin().target.flash
+        flash:ClearAllPoints()
+        flash:SetPoint("BOTTOMLEFT", BlizzFrame, "BOTTOMLEFT", spot.x, spot.y)
+        flash:SetSize(188, 67)
     end
 
     -- ================================================================
@@ -977,6 +1016,7 @@ function UF.TargetStyle.Create(opts)
                 "DragonUI_" .. namePrefix .. "Elite", "ARTWORK", nil, 1)
             frameElements.elite:Hide()
         end
+        ApplyThreatFlash()
 
         local raidTargetIcon = _G[namePrefix .. "FrameTextureFrameRaidTargetIcon"]
         if raidTargetIcon and raidTargetIcon.SetDrawLayer then
@@ -1080,6 +1120,7 @@ function UF.TargetStyle.Create(opts)
         if not BlizzFrame.DragonUI_ClassificationHook then
             hooksecurefunc("TargetFrame_CheckClassification", function(self, forceNormal)
                 if self == BlizzFrame then
+                    ApplyThreatFlash()
                     UpdateClassification()
                 end
             end)
@@ -1158,7 +1199,11 @@ function UF.TargetStyle.Create(opts)
                 if NameBackground then
                     local r, g, b = UnitSelectionColor("player")
                     PaintNameBackground(r, g, b, false)
-                    NameBackground:Show()
+                    if GetConfig().show_name_background == false then
+                        NameBackground:Hide()
+                    else
+                        NameBackground:Show()
+                    end
                 end
 
                 -- Name & level text (preserve original color)
@@ -1175,7 +1220,11 @@ function UF.TargetStyle.Create(opts)
                         LevelText.originalColor = {r, g, b, a}
                     end
                     LevelText:SetText(UnitLevel("player"))
+                    LevelText:Show()
                 end
+                -- The empty unit reads as dead and level ??, which would draw "Dead" and the skull.
+                if DeadText then DeadText:Hide() end
+                if HighLevelTexture then HighLevelTexture:Hide() end
 
                 -- Health bar with class color system
                 if HealthBar then
@@ -1231,27 +1280,17 @@ function UF.TargetStyle.Create(opts)
                     ManaBar:Show()
                 end
 
-                -- Elite decoration
                 if frameElements.elite then
-                    local classification = UnitClassification("player")
-                    local pName   = UnitName("player")
-                    local kind = nil
-
-                    if pName and UF.FAMOUS_NPCS[pName] then
-                        kind = "elite"
-                    elseif classification
-                           and classification ~= "normal" then
-                        kind = (classification == "rare" or classification == "rareelite")
-                               and classification or "elite"
-                    end
-
-                    ShowDragon(kind)
+                    PreviewDragon()
                 end
 
                 -- Hide threat in test mode
                 if frameElements.threatNumeric then
                     frameElements.threatNumeric:Hide()
                 end
+
+                ApplyPvPIconVisibility()
+                if Module.textSystem then Module.textSystem.update() end
             end
 
             BlizzFrame.HideTest = function(self)
@@ -1496,6 +1535,9 @@ function UF.TargetStyle.Create(opts)
             UpdateHealthBarColor()
             ForceUpdatePowerBar()
             if Module.textSystem then Module.textSystem.update() end
+        elseif addon.TextSystem.IsEditorActive() and BlizzFrame.ShowTest then
+            -- The fake frame has no unit to read, so a setting change repaints it from the player.
+            BlizzFrame:ShowTest()
         end
 
         ApplyPvPIconVisibility()

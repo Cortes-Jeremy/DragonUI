@@ -423,6 +423,13 @@ local function BuildAurasTab(scroll)
 
     C:AddHeading(playerAuraSection, LO["Debuffs"])
 
+    C:AddToggle(playerAuraSection, {
+        label = LO["Show Debuffs"],
+        desc = LO["Show your debuffs on the player aura bar."],
+        dbPath = "buffs.show_debuffs",
+        callback = RefreshPlayerAuraSpacing,
+    })
+
     C:AddSlider(playerAuraSection, {
         label = LO["Debuff Icon Scale"],
         dbPath = "buffs.debuff_scale",
@@ -989,7 +996,7 @@ local function BuildAurasTab(scroll)
 
     local isDebuffDetached = C:GetDBValue("widgets.debuffs.custom_position")
     if isDebuffDetached then
-        C:AddDescription(resetSection, "|cff1784d1- " .. LO["Debuffs detached - positioned freely via Editor Mode"] .. "|r")
+        C:AddDescription(resetSection, "|cff" .. C.Theme.accentHex .. "- " .. LO["Debuffs detached - positioned freely via Editor Mode"] .. "|r")
     else
         C:AddDescription(resetSection, "|cffaaaaaa- " .. LO["Debuffs attached - follow buff row"] .. "|r")
     end

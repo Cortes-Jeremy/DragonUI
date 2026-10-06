@@ -762,6 +762,12 @@ local function SetTooltipByName(name, rank, spellID)
 end
 
 local function SetExtrabarTooltip(self)
+    if addon.ShouldHideActionTooltip() then
+        if GameTooltip:IsOwned(self) then
+            GameTooltip:Hide()
+        end
+        return
+    end
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     local companion = self:GetSlotData()
     if companion and companion.type == "companion" then
@@ -1518,7 +1524,7 @@ function BarProto:ApplyAnchorPosition()
         self.anchor:SetPoint(anchorPoint, UIParent, anchorPoint, widgetConfig.posX or 0, widgetConfig.posY or 0)
     else
         local cfg = Bar_GetConfig(self) or {}
-        self.anchor:SetPoint("CENTER", UIParent, "CENTER", cfg.x_position or 0, cfg.y_position or 260)
+        self.anchor:SetPoint("CENTER", UIParent, "CENTER", cfg.x_position or 0, cfg.y_position or 0)
     end
 end
 
