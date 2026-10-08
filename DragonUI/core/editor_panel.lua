@@ -8,19 +8,21 @@ local L = addon.L
 local EditorUI = { STRATA = "FULLSCREEN_DIALOG", MANAGER = 20, DIALOG = 60, MODAL = 100, POPUP_STRATA = "TOOLTIP", POPUP = 70 }
 addon.EditorUI = EditorUI
 
-local max, min = math.max, math.min
+local max, min, floor = math.max, math.min, math.floor
 local tinsert, tremove = table.insert, table.remove
 
 -- The widest row (343) plus 2x26 of padding: the rails are thick, so the content needs room.
 local DIALOG_WIDTH = 395
 local ROW_WIDTH = 343
--- Dialogs with few settings narrow to just past the coordinate row (X box, two arrows).
-local COMPACT_ROW_WIDTH = 306
+-- Dialogs with few settings narrow to just past the position row (X, Y, their arrows and the reset).
+local COMPACT_ROW_WIDTH = 320
+local COORD_BOX_WIDTH, AXIS_GAP, RESET_SIZE = 62, 12, 26
 local ROW_HEIGHT = 32
 local ROW_GAP = 2
 local LABEL_WIDTH = 118
 local PAD_X, PAD_TOP, PAD_BOTTOM = 26, 48, 26
 local SCREEN_MARGIN, SIDE_GAP = 8, 8
+local SCROLL_ROOM = 16
 local COORD_INTERVAL, ROWS_INTERVAL = 0.05, 0.2
 
 -- Assigned further down; api.lua reaches them through the addon.* wrappers.
@@ -29,7 +31,6 @@ local selectedEditorFrame
 
 local dialog
 local dialogSet
-local resetShown = false
 local combatHidden = false
 local dialogMoved = false
 local placedFor
@@ -259,6 +260,71 @@ local function GetDetachedResetActionForSelection()
     return nil, frameData
 end
 
+-- Frames with their own reset above; when they are not detached there is nothing to reset.
+local DETACHED_RESET = {
+    TargetCastbar = true, FocusCastbar = true, tot = true, fot = true, PetFrame = true,
+    Debuffs = true, buffs = true, durability = true,
+}
+-- The rest of a widgets entry (e.g. lfgframe.tooltip_position) is a setting, not part of the position.
+local POSITION_FIELDS = { "anchor", "relativePoint", "posX", "posY", "custom_position" }
+
+local function WidgetDefault(frameData)
+    local path = frameData.configPath
+    if not (path and path[1] == "widgets" and path[2]) then return nil end
+    local defaults = addon.defaults and addon.defaults.profile and addon.defaults.profile.widgets
+    local default = defaults and defaults[path[2]]
+    if default and default.posX ~= nil and default.posY ~= nil then
+        return path[2], default
+    end
+end
+
+-- GetPoint reads offsets back skewed, hence the tolerance; mainbars also knows each art style's default Y.
+local function IsWidgetAtDefault(key, default)
+    local saved = addon.db.profile.widgets and addon.db.profile.widgets[key]
+    if not saved then return true end
+    if (saved.anchor or "CENTER") == (default.anchor or "CENTER")
+        and math.abs((tonumber(saved.posX) or 0) - default.posX) <= 1
+        and math.abs((tonumber(saved.posY) or 0) - default.posY) <= 1
+        and (saved.custom_position and true or false) == (default.custom_position and true or false) then
+        return true
+    end
+    return addon.IsWidgetAtDefaultPosition and addon.IsWidgetAtDefaultPosition(key) or false
+end
+
+-- applyPosition adds the module's automatic shifts; onNudge is skipped, modules use it to mark a hand move.
+local function ResetWidget(key, default, frameData)
+    local widgets = addon.db.profile.widgets
+    widgets[key] = widgets[key] or {}
+    for _, field in ipairs(POSITION_FIELDS) do
+        widgets[key][field] = default[field]
+    end
+    frameData.frame.DragonUI_LayoutOffset = nil
+    if frameData.applyPosition then
+        Call(frameData.applyPosition)
+    else
+        addon.ApplyWidgetPositionFromDB(key, frameData.frame)
+    end
+end
+
+-- The reset for the selected frame, or nil when it is already where it starts.
+local function GetResetActionForSelection()
+    local action, frameData = GetDetachedResetActionForSelection()
+    if action or not frameData or DETACHED_RESET[(GetSelectedEditableFrameData())] then
+        return action, frameData
+    end
+
+    if frameData.resetPosition then
+        if Call(frameData.isDefaultPosition) then return nil, frameData end
+        return frameData.resetPosition, frameData
+    end
+
+    local key, default = WidgetDefault(frameData)
+    if key and not IsWidgetAtDefault(key, default) then
+        return function() ResetWidget(key, default, frameData) end, frameData
+    end
+    return nil, frameData
+end
+
 -- ============================================================================
 -- ROW SETS (pooled rows bound to a registry def; shared by the settings dialog and the editor manager)
 -- ============================================================================
@@ -330,6 +396,8 @@ RowKinds.slider = {
         control:SetLabel(Resolve(def.label) or "")
         control:SetRange(def.min or 0, def.max or 1, def.step or 0.01)
         control:SetFormat(def.format)
+        control:SetValueHidden(def.hideValue)
+        row.height = control:SetEndTexts(Resolve(def.minText), Resolve(def.maxText))
     end,
     refresh = function(row)
         local control = row.control
@@ -348,13 +416,17 @@ RowKinds.slider = {
 -- A tooltip of its own: GameTooltip is the editor's tooltip preview and sits below these windows.
 local rowTooltip
 
-local function ShowRowTooltip(row)
-    local text = row.def and Resolve(row.def.tooltip)
-    if not text or text == "" then return end
+local function EditorTooltip()
     if not rowTooltip then
         rowTooltip = CreateFrame("GameTooltip", "DragonUI_EditorRowTooltip", UIParent, "GameTooltipTemplate")
     end
-    rowTooltip:SetOwner(row.control, "ANCHOR_RIGHT")
+    return rowTooltip
+end
+
+local function ShowRowTooltip(row)
+    local text = row.def and Resolve(row.def.tooltip)
+    if not text or text == "" then return end
+    EditorTooltip():SetOwner(row.control, "ANCHOR_RIGHT")
     rowTooltip:SetText(Resolve(row.def.label) or "", 1, 0.82, 0)
     rowTooltip:AddLine(text, 1, 1, 1, true)
     rowTooltip:Show()
@@ -655,7 +727,7 @@ function RowSet:Clear()
         row.frame:ClearAllPoints()
         tinsert(self.pools[row.kind], row)
     end
-    self.def, self.count, self.keep = nil, 0, nil
+    self.def, self.count, self.scroll, self.reveal = nil, 0, 0, nil
     wipe(self.sections)
 end
 
@@ -762,7 +834,7 @@ end
 function RowSet:ToggleSection(section)
     local collapsed = not section.collapsed
     self:SetCollapsed(section, collapsed, true)
-    self.keep = (not collapsed) and section or nil
+    self.reveal = (not collapsed) and section or nil
     local onExpand = (not collapsed) and section.header.def and section.header.def.onExpand
     if onExpand then Safely(onExpand) end
     self:Refresh()
@@ -771,21 +843,74 @@ function RowSet:ToggleSection(section)
     end
 end
 
--- Height cap: folds the last open section that still shows rows, sparing the one the user just opened.
-function RowSet:FoldLast()
-    for index = #self.sections, 1, -1 do
-        local section = self.sections[index]
-        local covered = section.parent and Hiding(section.parent)
-        if section ~= self.keep and not section.collapsed and not covered then
-            for _, row in ipairs(section.rows) do
-                if not row.hidden then
-                    self:SetCollapsed(section, true)
-                    return true
-                end
-            end
+local function ShownRows(set)
+    local list = {}
+    for _, row in ipairs(set.rows) do
+        if Shown(row) then
+            list[#list + 1] = row
         end
     end
+    return list
+end
+
+local function InSection(row, section)
+    local owner = row.section
+    while owner do
+        if owner == section then return true end
+        owner = owner.parent
+    end
     return false
+end
+
+-- Index of the last row that fits in `view` when `from` is the first one shown.
+local function LastInView(list, from, gap, view)
+    local used, last = 0, from - 1
+    for index = from, #list do
+        local need = used + list[index].height + (used > 0 and gap or 0)
+        if need > view then break end
+        used, last = need, index
+    end
+    return last
+end
+
+-- Height of the shown rows, gaps between them included.
+function RowSet:ContentHeight(gap)
+    local height, count = 0, 0
+    for _, row in ipairs(self.rows) do
+        if Shown(row) then
+            height, count = height + row.height, count + 1
+        end
+    end
+    return count > 0 and height + (count - 1) * gap or 0
+end
+
+-- Clamps the whole-row scroll to `view`, scrolling a section the user just opened into it; returns the max scroll.
+function RowSet:FitScroll(gap, view)
+    local list = ShownRows(self)
+    local used, maxScroll = 0, #list
+    while maxScroll > 0 do
+        local need = used + list[maxScroll].height + (used > 0 and gap or 0)
+        if need > view then break end
+        used, maxScroll = need, maxScroll - 1
+    end
+
+    local scroll = self.scroll or 0
+    local section = self.reveal
+    self.reveal = nil
+    if section then
+        local first, last
+        for index, row in ipairs(list) do
+            if row == section.header then first = index end
+            if first and InSection(row, section) then last = index end
+        end
+        if first and last and (first <= scroll or last > LastInView(list, scroll + 1, gap, view)) then
+            scroll = first - 1
+        end
+    end
+
+    self.scroll = max(0, min(maxScroll, scroll))
+    self.maxScroll = maxScroll
+    return maxScroll
 end
 
 function RowSet:Poll()
@@ -827,10 +952,18 @@ function RowSet:VisibleCount()
     return visible
 end
 
--- Stacks the visible rows from (x, y) under anchor's top-left; returns y after the last row's trailing gap.
-function RowSet:Layout(anchor, x, y, gap)
+-- Stacks shown rows from (x, y), returning y past the trailing gap; with `view` only the scrolled-to rows that fit show.
+function RowSet:Layout(anchor, x, y, gap, view)
+    local skip, full = view and (self.scroll or 0) or 0, false
+    local limit = view and y + view
     for _, row in ipairs(self.rows) do
         if not Shown(row) then
+            row.frame:Hide()
+        elseif skip > 0 then
+            skip = skip - 1
+            row.frame:Hide()
+        elseif full or (limit and y + row.height > limit) then
+            full = true
             row.frame:Hide()
         else
             row.frame:ClearAllPoints()
@@ -842,9 +975,58 @@ function RowSet:Layout(anchor, x, y, gap)
     return y
 end
 
--- Windows never outgrow the screen: past this height the last open sections fold themselves.
+-- Windows never outgrow the screen: past this height their rows scroll.
 local function MaxWindowHeight()
     return UIParent:GetHeight() - 80
+end
+
+local function CreateRowScrollBar(set, window)
+    local forever = addon.ForeverUI
+    local bar = forever.CreateScrollBar(window)
+    local function scrollTo(scroll)
+        scroll = max(0, min(set.maxScroll or 0, scroll))
+        if scroll ~= set.scroll then
+            set.scroll = scroll
+            set.onRelayout(set)
+        end
+    end
+    bar:HookScript("OnValueChanged", function(self, value)
+        if not self.silent then scrollTo(floor(value + 0.5)) end
+    end)
+    bar.upButton:SetScript("OnClick", function() scrollTo(set.scroll - 1) end)
+    bar.downButton:SetScript("OnClick", function() scrollTo(set.scroll + 1) end)
+    window:EnableMouseWheel(true)
+    window:SetScript("OnMouseWheel", function(_, delta)
+        if bar:IsShown() then scrollTo(set.scroll - delta) end
+    end)
+    set.scrollBar = bar
+    if forever.EnforceLayering then forever.EnforceLayering(window) end
+    return bar
+end
+
+-- Lays the set out from y within `room`, scrolling whole rows past it; returns y past the rows and the bar's extra width.
+local function LayoutRows(set, window, x, y, gap, room)
+    local content = set:ContentHeight(gap)
+    if content <= room then
+        set.scroll, set.reveal = 0, nil
+        if set.scrollBar then set.scrollBar:Hide() end
+        return set:Layout(window, x, y, gap), 0
+    end
+
+    local bar = set.scrollBar or CreateRowScrollBar(set, window)
+    local maxScroll = set:FitScroll(gap, room)
+    set:Layout(window, x, y, gap, room)
+    -- The steppers sit 19 above and below the track.
+    bar:ClearAllPoints()
+    bar:SetPoint("TOPLEFT", window, "TOPLEFT", x + set.rowWidth + 6, -(y + 19))
+    bar:SetHeight(max(1, room - 38))
+    bar.silent = true
+    bar:SetMinMaxValues(0, maxScroll)
+    bar:SetValue(set.scroll)
+    bar.silent = nil
+    addon.ForeverUI.SetScrollBarFraction(bar, room / content)
+    bar:Show()
+    return y + room + gap, SCROLL_ROOM
 end
 
 local function GetRegistryDef(name)
@@ -866,43 +1048,25 @@ Layout = function()
     if not dialog then return end
     local y = PAD_TOP
 
-    local function place(frame, height)
-        frame:ClearAllPoints()
-        frame:SetPoint("TOPLEFT", dialog, "TOPLEFT", PAD_X, -y)
-        y = y + height + ROW_GAP
-    end
+    -- The holder keeps the width it was built with; the reset button sits at the row's right end.
+    dialog.positionRow:SetWidth(dialogSet.rowWidth)
+    dialog.positionRow:ClearAllPoints()
+    dialog.positionRow:SetPoint("TOPLEFT", dialog, "TOPLEFT", PAD_X, -y)
+    y = y + ROW_HEIGHT + ROW_GAP
 
-    place(dialog.xRow, ROW_HEIGHT)
-    place(dialog.yRow, ROW_HEIGHT)
-    y = dialogSet:Layout(dialog, PAD_X, y, ROW_GAP)
-
-    if resetShown then
-        dialog.divider:ClearAllPoints()
-        dialog.divider:SetPoint("TOP", dialog, "TOP", 0, -(y + 2))
-        dialog.divider:Show()
-        y = y + 20
-        dialog.resetButton:ClearAllPoints()
-        dialog.resetButton:SetPoint("TOP", dialog, "TOP", 0, -y)
-        dialog.resetButton:Show()
-        y = y + 28 + ROW_GAP
-    else
-        dialog.divider:Hide()
-        dialog.resetButton:Hide()
-    end
-
-    local height = y - ROW_GAP + PAD_BOTTOM
-    if height > MaxWindowHeight() and dialogSet:FoldLast() then
-        return Layout()
-    end
-    dialog:SetHeight(height)
+    local extra
+    y, extra = LayoutRows(dialogSet, dialog, PAD_X, y, ROW_GAP, MaxWindowHeight() - y - PAD_BOTTOM)
+    dialog:SetWidth(dialogSet.rowWidth + 2 * PAD_X + extra)
+    dialog:SetHeight(y - ROW_GAP + PAD_BOTTOM)
 end
 
 UpdateReset = function()
     if not dialog then return end
-    local show = GetDetachedResetActionForSelection() ~= nil
-    if show ~= resetShown then
-        resetShown = show
-        Layout()
+    local available = GetResetActionForSelection() ~= nil
+    -- Our own flag: a disabled 3.3.5a button returns 0 from IsEnabled(), which Lua treats as true.
+    if dialog.resetAvailable ~= available then
+        dialog.resetAvailable = available
+        if available then dialog.resetButton:Enable() else dialog.resetButton:Disable() end
     end
 end
 
@@ -927,6 +1091,9 @@ local function PlaceDialog(target)
     local left, right, top, bottom = target:GetLeft(), target:GetRight(), target:GetTop(), target:GetBottom()
     local x, y
     if left and right and top and bottom then
+        -- A box grown by SetEditorBoxScale reaches past the frame by its (negative) hit rect insets.
+        local insetL, insetR, insetT = target:GetHitRectInsets()
+        left, right, top = left + min(insetL or 0, 0), right - min(insetR or 0, 0), top - min(insetT or 0, 0)
         local ratio = target:GetEffectiveScale() / UIParent:GetEffectiveScale()
         left, right, top = left * ratio, right * ratio, top * ratio
         if screenW - right >= width + SIDE_GAP or screenW - right >= left then
@@ -1012,29 +1179,34 @@ local function CreateNudgeButton(parent, iconName, rotated, dx, dy)
     return button
 end
 
-local function CreateCoordRow(set, labelText, minus, plus)
-    local row = NewHolder(set)
-    local label = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-    label:SetPoint("LEFT", row, "LEFT", 0, 0)
-    label:SetWidth(LABEL_WIDTH)
-    label:SetJustifyH("LEFT")
-    label:SetText(labelText)
+-- Digits, one leading minus and one decimal point; IME full-width forms and decimal commas are converted first.
+local function SanitizeCoordinate(text)
+    text = text:gsub("\239\188([\144-\153])", function(digit) return string.char(digit:byte() - 96) end)
+    text = text:gsub("\239\188\141", "-"):gsub("\226\136\146", "-")
+    text = text:gsub("\239\188[\140\142]", "."):gsub(",", ".")
+    local negative = text:find("^%s*%-") ~= nil
+    text = text:gsub("[^%d%.]", "")
+    local dot = text:find(".", 1, true)
+    if dot then
+        text = text:sub(1, dot) .. text:sub(dot + 1):gsub("%.", "")
+    end
+    return (negative and "-" or "") .. text
+end
 
-    local box = addon.ForeverUI.CreateEditBox(row, 80, 20)
-    box:SetPoint("LEFT", row, "LEFT", LABEL_WIDTH + 10, 0)
-    box:SetJustifyH("CENTER")
-    box:SetMaxLetters(10)
-    box:SetScript("OnEnterPressed", ApplyTypedCoordinates)
-
-    local back = CreateNudgeButton(row, minus.icon, minus.rotated, minus.dx, minus.dy)
-    back:SetPoint("LEFT", box, "RIGHT", 10, 0)
-    local forward = CreateNudgeButton(row, plus.icon, plus.rotated, plus.dx, plus.dy)
-    forward:SetPoint("LEFT", back, "RIGHT", 4, 0)
-    return row, box
+local function FilterCoordinateInput(box, userInput)
+    if not userInput then return end
+    local text = box:GetText() or ""
+    local clean = SanitizeCoordinate(text)
+    if clean ~= text then
+        -- The cursor counts characters, and a full-width IME digit is three bytes.
+        local cursor = SanitizeCoordinate(addon.ForeverUI.CharPrefix(text, box:GetCursorPosition() or #text))
+        box:SetText(clean)
+        box:SetCursorPosition(#cursor)
+    end
 end
 
 local function OnResetClicked()
-    local action, frameData = GetDetachedResetActionForSelection()
+    local action, frameData = GetResetActionForSelection()
     if not action then
         UpdateReset()
         return
@@ -1054,6 +1226,57 @@ local function OnResetClicked()
     dialogSet:Poll()
     UpdateReset()
     UpdateCoords()
+end
+
+local function CreateAxis(row, labelText, after, minus, plus)
+    local label = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    if after then
+        label:SetPoint("LEFT", after, "RIGHT", AXIS_GAP, 0)
+    else
+        label:SetPoint("LEFT", row, "LEFT", 0, 0)
+    end
+    label:SetText(labelText)
+
+    local box = addon.ForeverUI.CreateEditBox(row, COORD_BOX_WIDTH, 20)
+    box:SetPoint("LEFT", label, "RIGHT", 6, 0)
+    box:SetMaxLetters(10)
+    box:SetScript("OnEnterPressed", ApplyTypedCoordinates)
+    box:SetScript("OnTextChanged", FilterCoordinateInput)
+
+    local back = CreateNudgeButton(row, minus.icon, minus.rotated, minus.dx, minus.dy)
+    back:SetPoint("LEFT", box, "RIGHT", 6, 0)
+    local forward = CreateNudgeButton(row, plus.icon, plus.rotated, plus.dx, plus.dy)
+    forward:SetPoint("LEFT", back, "RIGHT", 2, 0)
+    return box, forward
+end
+
+local function ShowResetTooltip(button)
+    local tooltip = EditorTooltip()
+    tooltip:SetOwner(button, "ANCHOR_RIGHT")
+    tooltip:SetText(L["Reset Position"], 1, 1, 1)
+    tooltip:Show()
+end
+
+-- X and Y share one row and the reset button closes it, so resetting costs no height.
+local function CreatePositionRow(set)
+    local row = NewHolder(set)
+    local xBox, xEnd = CreateAxis(row, "X", nil,
+        { icon = "common-dropdown-icon-back", dx = -1, dy = 0 },
+        { icon = "common-dropdown-icon-next", dx = 1, dy = 0 })
+    local yBox = CreateAxis(row, "Y", xEnd,
+        { icon = "common-dropdown-icon-back", rotated = true, dx = 0, dy = -1 },
+        { icon = "common-dropdown-icon-next", rotated = true, dx = 0, dy = 1 })
+
+    local reset = addon.ForeverUI.CreateCloseButton(row, {
+        art = "128-redbutton-refresh",
+        size = RESET_SIZE,
+        sound = "igMainMenuOptionCheckBoxOn",
+        onClick = OnResetClicked,
+    })
+    reset:SetPoint("RIGHT", row, "RIGHT", 0, 0)
+    reset:SetScript("OnEnter", ShowResetTooltip)
+    reset:SetScript("OnLeave", HideRowTooltip)
+    return row, xBox, yBox, reset
 end
 
 local function OnDialogUpdate(self, elapsed)
@@ -1110,18 +1333,7 @@ local function EnsureDialog()
     dialog = frame
     dialogSet = NewRowSet(frame, ROW_WIDTH, { overlayResize = true, onRelayout = Layout, onChange = UpdateReset })
 
-    frame.xRow, frame.xBox = CreateCoordRow(dialogSet, "X",
-        { icon = "common-dropdown-icon-back", dx = -1, dy = 0 },
-        { icon = "common-dropdown-icon-next", dx = 1, dy = 0 })
-    frame.yRow, frame.yBox = CreateCoordRow(dialogSet, "Y",
-        { icon = "common-dropdown-icon-back", rotated = true, dx = 0, dy = -1 },
-        { icon = "common-dropdown-icon-next", rotated = true, dx = 0, dy = 1 })
-
-    frame.divider = forever.CreateDivider(frame, "ornate")
-    frame.divider:Hide()
-    frame.resetButton = forever.CreateButton(frame, L["Reset"], 180, 28)
-    frame.resetButton:SetScript("OnClick", OnResetClicked)
-    frame.resetButton:Hide()
+    frame.positionRow, frame.xBox, frame.yBox, frame.resetButton = CreatePositionRow(dialogSet)
 
     frame:SetScript("OnUpdate", OnDialogUpdate)
     frame:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -1154,11 +1366,10 @@ OpenSettingsDialog = function(target)
     dialogSet:Clear()
     local rowWidth = (not def or def.compact) and COMPACT_ROW_WIDTH or ROW_WIDTH
     dialogSet:SetRowWidth(rowWidth)
-    frame:SetWidth(rowWidth + 2 * PAD_X)
     dialogSet:Load(def, name)
 
-    resetShown = GetDetachedResetActionForSelection() ~= nil
     Layout()
+    UpdateReset()
 
     if placedFor ~= target then
         placedFor = target
@@ -1182,7 +1393,6 @@ local function CloseSettingsDialog()
     dialog.yBox:ClearFocus()
     dialog:Hide()
     dialogSet:Clear()
-    resetShown = false
 end
 
 -- ============================================================================
@@ -1262,6 +1472,7 @@ addon.EditorPanel = {
     GetDef = GetRegistryDef,
     CreateRowSet = NewRowSet,
     MaxHeight = MaxWindowHeight,
+    LayoutRows = LayoutRows,
     -- Same rows keep their widgets so a slider being dragged survives the rebuild a set() asks for.
     Rebuild = function()
         if selectedEditorFrame then

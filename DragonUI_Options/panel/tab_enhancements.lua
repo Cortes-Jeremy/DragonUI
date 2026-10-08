@@ -583,6 +583,42 @@ local function BuildEnhancementsTab(scroll)
     })
 
     -- ====================================================================
+    -- PERSONAL RESOURCE DISPLAY
+    -- ====================================================================
+    C:AddSpacer(scroll)
+    local prdSection = C:AddSection(scroll, LO["Personal Resource Display"])
+
+    C:AddToggle(prdSection, {
+        label = LO["Personal Resource Display"],
+        desc = LO["Add Health and Resource below your Character."],
+        getFunc = function() return GetModuleField("personalresource", "enabled") == true end,
+        setFunc = function(val)
+            EnsureModuleTable("personalresource")
+            addon.db.profile.modules.personalresource.enabled = val
+            if addon.RefreshPersonalResourceSystem then addon.RefreshPersonalResourceSystem() end
+        end,
+        requiresReload = false,
+    })
+
+    -- ====================================================================
+    -- SWING TIMER
+    -- ====================================================================
+    C:AddSpacer(scroll)
+    local swingSection = C:AddSection(scroll, LO["Swing Timer"])
+
+    C:AddToggle(swingSection, {
+        label = LO["Swing Timer"],
+        desc = LO["Show a bar with the time left until each weapon's next swing."],
+        getFunc = function() return GetModuleField("swingtimer", "enabled") == true end,
+        setFunc = function(val)
+            EnsureModuleTable("swingtimer")
+            addon.db.profile.modules.swingtimer.enabled = val
+            if addon.RefreshSwingTimerSystem then addon.RefreshSwingTimerSystem() end
+        end,
+        requiresReload = false,
+    })
+
+    -- ====================================================================
     -- ENHANCED TOOLTIPS
     -- ====================================================================
     C:AddSpacer(scroll)

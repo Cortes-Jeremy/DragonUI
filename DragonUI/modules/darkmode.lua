@@ -815,6 +815,13 @@ local function DarkenCastbarBorders(tint)
             DarkenTexture(spellIcon.ModernBorder, tint)
         end
 
+        local shield = _G[name .. "Shield"]
+        if shield and shield.GetRegions then
+            for _, region in ipairs({ shield:GetRegions() }) do
+                DarkenTexture(region, tint)
+            end
+        end
+
         -- Darken the text background frame border
         local textBG = _G[name .. "TextBG"]
         if textBG and textBG.GetRegions then
@@ -824,6 +831,22 @@ local function DarkenCastbarBorders(tint)
                 end
             end
         end
+    end
+end
+
+-- Modules that build their art late hand it over here so every sweep and restore covers it.
+local chromeSources = {}
+
+local function DarkenChromeSource(source, tint)
+    local textures = source()
+    for i = 1, #textures do
+        DarkenTexture(textures[i], tint)
+    end
+end
+
+local function DarkenRegisteredChrome(tint)
+    for i = 1, #chromeSources do
+        DarkenChromeSource(chromeSources[i], tint)
     end
 end
 
@@ -919,6 +942,7 @@ local function ApplyDarkMode(forceAuraSync)
     DarkenBackpackCutout(tint)
     DarkenAddonButtonBorders(tint)
     DarkenCompactRaidFrameManager(tint)
+    DarkenRegisteredChrome(tint)
 
     -- Re-pin hide_main_bar_background (art/gryphon alpha) after SetVertexColor.
     if addon.RefreshActionBarVisibility then
@@ -1422,6 +1446,14 @@ end
 addon.GetDarkModeTint = function()
     if not IsModuleEnabled() or not DarkModeModule.applied then return nil end
     return GetTintValues()
+end
+
+-- source() returns the module's chrome textures; it is called on every apply.
+addon.RegisterDarkModeChrome = function(source)
+    chromeSources[#chromeSources + 1] = source
+    if DarkModeModule.applied then
+        DarkenChromeSource(source, GetTintValues())
+    end
 end
 
 -- Re-darken castbar borders (called from castbar.lua after lazy castbar creation)

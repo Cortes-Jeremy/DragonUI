@@ -1295,6 +1295,9 @@ L["Force one icon on all enemy nameplates so you can position and size it. Set t
 
 -- Character Panel, Pets & Mounts and diagnostics
 L["DragonUI"] = "DragonUI"
+L["Core"] = "Principal"
+L["Frames"] = "Quadros"
+L["Interface"] = "Interface"
 L["Modern reskin of the Blizzard character window."] = "Visual moderno para a janela de personagem da Blizzard."
 L["Enable Character Panel"] = "Ativar painel de personagem"
 L["Apply the DragonUI reskin to the character window."] = "Aplica o visual do DragonUI à janela de personagem."
@@ -1402,6 +1405,12 @@ L["HP Warning Threshold"] = "Limiar de Aviso de HP"
 L["Percentage of HP at which the warning triggers."] = "Porcentagem do HP na qual o aviso é disparado."
 L["Test Warning (3 sec)"] = "Testar Aviso (3 seg)"
 L["Triggers a 3-second preview of the warning state to help you adjust the threshold."] = "Ativa uma prévia de 3 segundos do estado de aviso para ajudar você a ajustar o limiar."
+L["Personal Resource Display"] = "Exibição de Recursos Pessoais"
+L["Add Health and Resource below your Character."] = "Adiciona vida e recurso abaixo do seu personagem."
+L["Swing Timer"] = "Temporizador de golpe"
+L["Show a bar with the time left until each weapon's next swing."] = "Mostra uma barra com o tempo restante até o próximo golpe de cada arma."
+L["Show Bar Title"] = "Mostrar título da barra"
+L["Show Time"] = "Mostrar tempo"
 
 -- Talents
 L["Talents"] = "Talentos"

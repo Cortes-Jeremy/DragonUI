@@ -438,9 +438,13 @@ local function IsMainBarBackgroundHidden()
     return buttons and buttons.hide_main_bar_background
 end
 
+-- With neither XP nor rep the bars drop only this far: a full slot sank the gryphons off screen.
+local EMPTY_BARS_DROP = 6
+
 local function NearBaseY(savedY, baseY, slot)
     local d = savedY - baseY
     return math.abs(d) <= 1 or math.abs(d - slot) <= 1 or math.abs(d + slot) <= 1
+        or math.abs(d + EMPTY_BARS_DROP) <= 1
 end
 
 local function GetFramedStackDrop()
@@ -980,13 +984,13 @@ local function IsXpBarVisible()
     return currXP < maxXP
 end
 
--- The defaults leave room for one bar: a slot up with XP and rep, a slot down with neither (max level).
+-- The defaults leave room for one bar: a slot up with XP and rep, a short drop with neither (max level).
 local function GetDualBarVerticalOffset()
     local xpShown = IsXpBarVisible()
     if xpShown ~= (GetWatchedFactionInfo() ~= nil) then return 0 end
     if not IsWidgetAtDefaultPosition("xpbar") or not IsWidgetAtDefaultPosition("repbar") then return 0 end
     local slot = GetXpBarHeight() + 2
-    return xpShown and slot or -slot
+    return xpShown and slot or -math.min(slot, EMPTY_BARS_DROP)
 end
 
 function MainMenuBarMixin:SetupStatusBars()
@@ -1760,9 +1764,11 @@ local function UpdateBarPositions()
     -- Resize editor frames to match bar dimensions
     if addon.ActionBarFrames.xpbar then
         addon.ActionBarFrames.xpbar:SetSize(barW, barH)
+        addon.SetEditorBoxScale(addon.ActionBarFrames.xpbar, cfg.expbar_scale or 1)
     end
     if addon.ActionBarFrames.repbar then
         addon.ActionBarFrames.repbar:SetSize(barW, barH)
+        addon.SetEditorBoxScale(addon.ActionBarFrames.repbar, cfg.repbar_scale or 1)
     end
 
     if style == "dragonflightui" then
@@ -2186,6 +2192,11 @@ local function RegisterActionBarFrames()
                 blizzardFrame = registration.blizzardFrame,
                 configPath = registration.configPath,
                 editorVisible = registration.editorVisible,
+                -- Dual-bar offset, art-style default Y and the rep bar's drop into the XP slot at max level.
+                applyPosition = function()
+                    addon.ApplyActionBarPositions()
+                    if addon.PositionActionBarsToContainers then addon.PositionActionBarsToContainers() end
+                end,
             })
         end
     end

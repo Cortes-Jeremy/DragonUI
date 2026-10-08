@@ -23,6 +23,9 @@ L["Arrow"] = "箭头"
 -- ============================================================================
 
 L["DragonUI"] = "DragonUI"
+L["Core"] = "核心"
+L["Frames"] = "框体"
+L["Interface"] = "界面"
 L["Use the tabs on the left to configure modules, action bars, unit frames, minimap, and more."] = "使用左侧标签页配置模块、动作条、单位框架、小地图等。"
 L["Editor Mode"] = "编辑模式"
 L["Cannot open options during combat."] = "战斗中无法打开选项。"
@@ -1571,6 +1574,12 @@ L["HP Warning Threshold"] = "HP警告临界值"
 L["Percentage of HP at which the warning triggers."] = "HP触发警告的百分比。"
 L["Test Warning (3 sec)"] = "测试警告（3秒）"
 L["Triggers a 3-second preview of the warning state to help you adjust the threshold."] = "触发3秒的警告状态预览，以帮助你调整临界值。"
+L["Personal Resource Display"] = "个人资源显示"
+L["Add Health and Resource below your Character."] = "在你的角色下方添加生命值和资源。"
+L["Swing Timer"] = "攻击计时条"
+L["Show a bar with the time left until each weapon's next swing."] = "显示每把武器距离下一次攻击的剩余时间。"
+L["Show Bar Title"] = "显示计时条标题"
+L["Show Time"] = "显示时间"
 
 -- Talents
 L["Talents"] = "天赋"

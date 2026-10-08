@@ -43,6 +43,7 @@ function NP.gather.PreparePlateForRefresh(plateData, snapshot)
     end
     NP.native_style.CaptureBarColor(plateData)
     NP.identity.UpdatePlateUnitToken(plateData)
+    NP.gather.UpdatePlateFaction(plateData)
     if NP.module.inArena and NP.identity.UpdateArenaCastBindingForPlate then
         NP.identity.UpdateArenaCastBindingForPlate(plateData)
     end
@@ -251,6 +252,20 @@ function NP.gather.GetGroupUnitForPlate(plateData)
         end
     end
     return nil
+end
+
+-- Sanctuaries and PvE realms paint unattackable enemy-faction players in a friendly colour; only the unit tells.
+function NP.gather.UpdatePlateFaction(plateData)
+    if plateData._enemyFaction ~= nil and plateData._enemyFactionName == plateData.plateName then
+        return
+    end
+    plateData._enemyFaction = nil
+    local token = NP.gather.ResolvePlateToken(plateData)
+    if token and UnitExists(token) and UnitIsPlayer(token) then
+        plateData._enemyFaction = not UnitIsFriend("player", token)
+        plateData._enemyFactionName = plateData.plateName
+        NP.gather.InvalidatePlateGates(plateData)
+    end
 end
 
 -- True for friendly player plates matched to a party/raid unit; excludes pets and NPCs.
@@ -773,6 +788,7 @@ function NP.gather.SyncName(plateData, unit)
     local allowEnemyNameClass = cfg.enemyPlayerClassColors ~= false and cfg.enemyNameClassColors == true
     local allowFriendlyNameClass = cfg.friendlyNameClassColors == true
         and (cfg.friendlyClassColors == true or cfg.partyClassColors == true)
+    local tinted = false
     if cfg.nameReactionColors then
         local skipFriendlyClass = isFriendlyPlayer and not allowFriendlyNameClass
         r, g, b = NP.gather.GetHealthBarColor(plateData, skipFriendlyClass)
@@ -783,17 +799,19 @@ function NP.gather.SyncName(plateData, unit)
                 r, g, b = 1, 0.1, 0.1
             end
         end
+        tinted = true
     elseif isEnemyPlayer and allowEnemyNameClass then
         r, g, b = classColor.r, classColor.g, classColor.b
+        tinted = true
     elseif isFriendlyPlayer and allowFriendlyNameClass then
         local cr, cg, cb = NP.gather.GetFriendlyPlayerClassColor(plateData)
         if cr then
             r, g, b = cr, cg, cb
+            tinted = true
         end
     end
-    -- Headline mode base name color (white by default); class color overrides it
-    -- below when enabled and resolved.
-    if headline then
+    -- Headline base colour only when no name colour option above tinted it; headline class colour still wins below.
+    if headline and not tinted then
         local nc = cfg.friendlyNameOnlyColor
         if nc then
             r, g, b = nc.r or 1, nc.g or 1, nc.b or 1

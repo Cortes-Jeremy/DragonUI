@@ -28,12 +28,28 @@ Colors.grayHex = Colors.grayHex or "808080"
 local Fonts = ForeverUI.Fonts or {}
 ForeverUI.Fonts = Fonts
 
+-- A font object left without a usable face makes every SetText raise "Font not set".
+local function Draws(font)
+    local probe = UIParent:CreateFontString(nil, "BACKGROUND")
+    probe:SetFontObject(font)
+    local ok = pcall(probe.SetText, probe, "A")
+    probe:Hide()
+    return ok
+end
+
 local function MakeFont(name, base, size)
     local font = CreateFont(name)
     font:CopyFontObject(base)
     local path, _, flags = base:GetFont()
     if path then
         font:SetFont(path, size, flags)
+    end
+    -- On CJK clients the base's own path can leave the copy faceless (#519): try the locale font, then the base.
+    if not Draws(font) then
+        font:SetFont(addon.Fonts.PRIMARY, size, flags)
+        if not Draws(font) then
+            return base
+        end
     end
     return font
 end
@@ -81,13 +97,14 @@ end
 function ForeverUI.ApplyNineSlice(frame, layoutName, layer)
     local layout = type(layoutName) == "table" and layoutName or Layouts[layoutName]
     layer = layer or "BORDER"
+    local scale = layout.scale or 1
     local pieces = {}
 
     local function Corner(position, point)
         local spec = layout.corners[position]
         local texture = frame:CreateTexture(nil, layer)
         local info = Put(texture, spec[1])
-        texture:SetSize(info[2], info[3])
+        texture:SetSize(info[2] * scale, info[3] * scale)
         texture:SetPoint(point, frame, point, spec[2], spec[3])
         pieces[position] = texture
         return texture
@@ -100,22 +117,22 @@ function ForeverUI.ApplyNineSlice(frame, layoutName, layer)
 
     local edges = layout.edges
     local top = frame:CreateTexture(nil, layer)
-    top:SetHeight(Put(top, edges.Top)[3])
+    top:SetHeight(Put(top, edges.Top)[3] * scale)
     top:SetPoint("TOPLEFT", topLeft, "TOPRIGHT", 0, 0)
     top:SetPoint("TOPRIGHT", topRight, "TOPLEFT", 0, 0)
 
     local bottom = frame:CreateTexture(nil, layer)
-    bottom:SetHeight(Put(bottom, edges.Bottom)[3])
+    bottom:SetHeight(Put(bottom, edges.Bottom)[3] * scale)
     bottom:SetPoint("BOTTOMLEFT", bottomLeft, "BOTTOMRIGHT", 0, 0)
     bottom:SetPoint("BOTTOMRIGHT", bottomRight, "BOTTOMLEFT", 0, 0)
 
     local left = frame:CreateTexture(nil, layer)
-    left:SetWidth(Put(left, edges.Left)[2])
+    left:SetWidth(Put(left, edges.Left)[2] * scale)
     left:SetPoint("TOPLEFT", topLeft, "BOTTOMLEFT", 0, 0)
     left:SetPoint("BOTTOMLEFT", bottomLeft, "TOPLEFT", 0, 0)
 
     local right = frame:CreateTexture(nil, layer)
-    right:SetWidth(Put(right, edges.Right)[2])
+    right:SetWidth(Put(right, edges.Right)[2] * scale)
     right:SetPoint("TOPRIGHT", topRight, "BOTTOMRIGHT", 0, 0)
     right:SetPoint("BOTTOMRIGHT", bottomRight, "TOPRIGHT", 0, 0)
 
@@ -490,13 +507,13 @@ function ForeverUI.CreateButton(parent, text, width, height)
     return button
 end
 
--- opts: size (default 24), large (128-RedButton-Exit art), onClick (default hides the parent).
+-- opts: size (24), large (128 art) or art (any red-button prefix), sound, onClick (default hides the parent).
 function ForeverUI.CreateCloseButton(parent, opts)
     opts = opts or {}
     local button = CreateFrame("Button", nil, parent)
     local size = opts.size or Metrics.window.closeSize
     button:SetSize(size, size)
-    local prefix = opts.large and "128-redbutton-exit" or "redbutton-exit"
+    local prefix = opts.art or (opts.large and "128-redbutton-exit" or "redbutton-exit")
 
     local function Skin(setter, getter, name)
         local info = ForeverAtlas[name]
@@ -513,7 +530,7 @@ function ForeverUI.CreateCloseButton(parent, opts)
     button:GetHighlightTexture():SetTexCoord(highlight[4], highlight[5], highlight[6], highlight[7])
 
     button:SetScript("OnClick", function(self)
-        PlaySound("igMainMenuClose")
+        PlaySound(opts.sound or "igMainMenuClose")
         if opts.onClick then
             opts.onClick(self)
         elseif self:GetParent() then
@@ -620,6 +637,7 @@ function ForeverUI.CreateCategoryButton(parent)
     local button = CreateFrame("Button", nil, parent)
     button:SetSize(M.rowWidth, M.rowHeight)
     button._fuIndent = 0
+    button._fuLabelLeft = M.labelLeft
 
     button.Texture = button:CreateTexture(nil, "BACKGROUND")
     button.Texture:SetPoint("CENTER", button, "CENTER", 0, 0)
@@ -646,8 +664,13 @@ function ForeverUI.CreateCategoryButton(parent)
     end
     function button:SetIndent(indent)
         self._fuIndent = indent or 0
-        self.Label:SetPoint("TOPLEFT", self, "TOPLEFT", M.labelLeft + self._fuIndent, M.labelY)
+        self.Label:SetPoint("TOPLEFT", self, "TOPLEFT", self._fuLabelLeft + self._fuIndent, M.labelY)
         UpdateCategoryButton(self)
+    end
+    -- Rows with no +/- toggle can pull their text in from the toggle's room (default Metrics.category.labelLeft).
+    function button:SetLabelLeft(left)
+        self._fuLabelLeft = left
+        self.Label:SetPoint("TOPLEFT", self, "TOPLEFT", left + self._fuIndent, M.labelY)
     end
     function button:SetExpandable(expandable, expanded, onToggle)
         if not self.Toggle then

@@ -24,6 +24,9 @@ L["Arrow"] = "Стрелка"
 -- ============================================================================
 
 L["DragonUI"] = "DragonUI"
+L["Core"] = "Основное"
+L["Frames"] = "Рамки"
+L["Interface"] = "Интерфейс"
 L["Use the tabs on the left to configure modules, action bars, unit frames, minimap, and more."] = "Используйте вкладки слева для настройки модулей, панелей действий, фреймов, миникарты и многого другого."
 L["Editor Mode"] = "Режим редактора"
 L["Cannot open options during combat."] = "Невозможно открыть настройки во время боя."
@@ -1574,6 +1577,12 @@ L["HP Warning Threshold"] = "Порог предупреждения HP"
 L["Percentage of HP at which the warning triggers."] = "Процент HP, при котором срабатывает предупреждение."
 L["Test Warning (3 sec)"] = "Тест предупреждения (3 сек.)"
 L["Triggers a 3-second preview of the warning state to help you adjust the threshold."] = "Запускает 3-секундный предпросмотр состояния предупреждения, чтобы помочь вам настроить порог."
+L["Personal Resource Display"] = "Индикатор личных ресурсов"
+L["Add Health and Resource below your Character."] = "Добавляет здоровье и ресурс под вашим персонажем."
+L["Swing Timer"] = "Таймер удара"
+L["Show a bar with the time left until each weapon's next swing."] = "Показывает полосу с временем до следующего удара каждым оружием."
+L["Show Bar Title"] = "Показывать название полосы"
+L["Show Time"] = "Показывать время"
 
 -- Talents
 L["Talents"] = "Таланты"

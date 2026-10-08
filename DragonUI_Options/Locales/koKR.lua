@@ -24,6 +24,9 @@ L["Arrow"] = "화살표"
 -- ============================================================================
 
 L["DragonUI"] = "DragonUI"
+L["Core"] = "핵심"
+L["Frames"] = "프레임"
+L["Interface"] = "인터페이스"
 L["Use the tabs on the left to configure modules, action bars, unit frames, minimap, and more."] = "왼쪽 탭을 사용하여 모듈, 액션바, 유닛 프레임, 미니맵 등을 설정하세요."
 L["Editor Mode"] = "편집 모드"
 L["Cannot open options during combat."] = "전투 중 옵션 사용 불가"
@@ -1575,6 +1578,12 @@ L["HP Warning Threshold"] = "HP 경고 임계값"
 L["Percentage of HP at which the warning triggers."] = "경고가 트리거되는 HP 비율."
 L["Test Warning (3 sec)"] = "경고 테스트 (3초)"
 L["Triggers a 3-second preview of the warning state to help you adjust the threshold."] = "임계값을 조정하는 데 도움이 되는 3초 미리보기 경고 상태를 트리거합니다."
+L["Personal Resource Display"] = "개인 자원 표시"
+L["Add Health and Resource below your Character."] = "캐릭터 아래에 생명력과 자원을 표시합니다."
+L["Swing Timer"] = "스윙 타이머"
+L["Show a bar with the time left until each weapon's next swing."] = "각 무기의 다음 공격까지 남은 시간을 막대로 표시합니다."
+L["Show Bar Title"] = "바 제목 표시"
+L["Show Time"] = "시간 표시"
 
 -- Talents
 L["Talents"] = "특성"

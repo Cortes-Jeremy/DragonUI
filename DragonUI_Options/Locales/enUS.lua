@@ -20,6 +20,9 @@ if not L then return end
 -- ============================================================================
 
 L["DragonUI"] = true
+L["Core"] = true
+L["Frames"] = true
+L["Interface"] = true
 L["Use the tabs on the left to configure modules, action bars, unit frames, minimap, and more."] = true
 L["Editor Mode"] = true
 L["Cannot open options during combat."] = true
@@ -1558,6 +1561,12 @@ L["HP Warning Threshold"] = true
 L["Percentage of HP at which the warning triggers."] = true
 L["Test Warning (3 sec)"] = true
 L["Triggers a 3-second preview of the warning state to help you adjust the threshold."] = true
+L["Personal Resource Display"] = true
+L["Add Health and Resource below your Character."] = true
+L["Swing Timer"] = true
+L["Show a bar with the time left until each weapon's next swing."] = true
+L["Show Bar Title"] = true
+L["Show Time"] = true
 
 -- Talents
 L["Talents"] = true

@@ -82,6 +82,7 @@ L["DragonUI Version: "] = true
 L["Exit Edit Mode"] = true
 L["Reset All Positions"] = true
 L["Are you sure you want to reset all interface elements to their default positions?"] = true
+L["Reset Position"] = true
 L["Yes"] = true
 L["No"] = true
 L["UI elements have been repositioned. Reload UI to ensure all graphics display correctly?"] = true
@@ -142,6 +143,7 @@ L["Native animated minimap decoration effects for DragonUI."] = true
 L["Minimap Buttons"] = true
 L["Left-click to show or hide minimap addon buttons."] = "Left-Click to open minimap buttons."
 L["Right-click to open DragonUI settings."] = true
+L["Shift-click to open Editor Mode."] = true
 
 -- ============================================================================
 -- EDITOR MODE LABELS (displayed on mover overlays)
@@ -215,7 +217,6 @@ L["Delete Layout"] = true
 L["Export Layout"] = true
 L["Import Layout"] = true
 L["Enter a name for the layout:"] = true
-L["Reset"] = true
 L["General"] = true
 
 -- ============================================================================
@@ -691,6 +692,14 @@ L["Level %d"] = true
 
 L["Low HP Alert"] = true
 L["Plays a sound and flashes the screen edges when your HP drops below the threshold."] = true
+L["Personal Resource Display"] = true
+L["PersonalResource"] = true
+L["Add Health and Resource below your Character."] = true
+L["Swing Timer"] = true
+L["Show a bar with the time left until each weapon's next swing."] = true
+L["SwingTimerMainHand"] = "Main Hand Swing Timer"
+L["SwingTimerOffHand"] = "Off Hand Swing Timer"
+L["SwingTimerRanged"] = "Ranged Swing Timer"
 
 -- Talents
 L["Talents"] = true
@@ -971,6 +980,23 @@ L["Show Aura Source"] = true
 L["Show Header Background"] = true
 L["Font Size"] = true
 L["Custom Height"] = true
+L["Size"] = true
+L["Narrow"] = true
+L["Wide"] = true
+L["Health Bar Height"] = true
+L["Short"] = true
+L["Tall"] = true
+L["Power Bar Height"] = true
+L["Padding"] = true
+L["Always"] = true
+L["In Combat"] = true
+L["Hide Health Bar"] = true
+L["Hide Power Bar"] = true
+L["Hide Alternate Power Bar"] = true
+L["Show Class Color"] = true
+L["Show Bar Text"] = true
+L["Show Bar Title"] = true
+L["Show Time"] = true
 L["Color"] = true
 L["Enable Dark Mode"] = true
 L["Intensity"] = true
@@ -982,6 +1008,7 @@ L["Unit Frame Appearance"] = true
 L["Unit Frame Art"] = true
 L["Elite Dragons"] = true
 L["Center Names"] = true
+L["Combat"] = true
 L["Action Bars"] = true
 L["Bottom Left Bar"] = true
 L["Bottom Right Bar"] = true
@@ -992,10 +1019,11 @@ L["Button Appearance"] = true
 L["Main Bar Only Background"] = true
 L["Hide Main Bar Background"] = true
 L["Button Tooltips"] = true
-L["Always"] = true
 L["Never"] = true
 L["Show Count Text"] = true
 L["Show Macro Names"] = true
 L["Hotkey Font Size"] = true
 L["Show Cooldown Text"] = true
 L["Min Duration"] = true
+L["Whole Seconds"] = true
+L["Show cooldown text in whole seconds, without the tenths under 5 seconds."] = true

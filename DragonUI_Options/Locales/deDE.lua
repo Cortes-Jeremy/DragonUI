@@ -20,6 +20,9 @@ if not L then return end
 -- ============================================================================
 
 L["DragonUI"] = "DragonUI"
+L["Core"] = "Kern"
+L["Frames"] = "Rahmen"
+L["Interface"] = "Interface"
 L["Use the tabs on the left to configure modules, action bars, unit frames, minimap, and more."] = "Verwende die Tabs links, um Module, Aktionsleisten, Einheitenrahmen, Minimap und mehr zu konfigurieren."
 L["Editor Mode"] = "Editor-Modus"
 L["Cannot open options during combat."] = "Optionen können im Kampf nicht geöffnet werden."
@@ -1573,6 +1576,12 @@ L["HP Warning Threshold"] = "HP-Warnschwellenwert"
 L["Percentage of HP at which the warning triggers."] = "Prozentsatz der HP, bei dem die Warnung ausgelöst wird."
 L["Test Warning (3 sec)"] = "Warnung testen (3 Sek.)"
 L["Triggers a 3-second preview of the warning state to help you adjust the threshold."] = "Löst eine 3-Sekunden-Vorschau des Warnzustands aus, damit du den Schwellenwert anpassen kannst."
+L["Personal Resource Display"] = "Persönliche Ressourcenanzeige"
+L["Add Health and Resource below your Character."] = "Fügt unter deinem Charakter Gesundheit und Ressource hinzu."
+L["Swing Timer"] = "Schlagtimer"
+L["Show a bar with the time left until each weapon's next swing."] = "Zeigt eine Leiste mit der verbleibenden Zeit bis zum nächsten Schlag jeder Waffe."
+L["Show Bar Title"] = "Leistentitel anzeigen"
+L["Show Time"] = "Zeit anzeigen"
 
 -- Talents
 L["Talents"] = "Talente"
