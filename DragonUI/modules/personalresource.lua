@@ -56,8 +56,8 @@ local POWER_INFO = {
     RUNIC_POWER = { prediction = { r = 0, g = 0.325, b = 0.4 }, fullPowerAnim = true },
 }
 
-local POWER_EVENTS = {
-    UNIT_MANA = true, UNIT_RAGE = true, UNIT_ENERGY = true, UNIT_FOCUS = true, UNIT_RUNIC_POWER = true,
+-- Current power is polled in OnFrameUpdate; predicted regen fires no UNIT_ENERGY/UNIT_MANA.
+local MAX_POWER_EVENTS = {
     UNIT_MAXMANA = true, UNIT_MAXRAGE = true, UNIT_MAXENERGY = true, UNIT_MAXFOCUS = true,
     UNIT_MAXRUNIC_POWER = true,
 }
@@ -94,6 +94,7 @@ local altActive = false
 local powerType, powerToken = 0, nil
 local predictedPowerCost
 local currPowerValue
+local currAltValue
 local healDirty = false
 
 local eventFrame = CreateFrame("Frame")
@@ -130,15 +131,12 @@ local function EditorActive()
 end
 
 -- Forever's FIRST/SECOND/THIRD_NUMBER_CAP_NO_SPACE; the Asian clients keep DragonUI's own units.
-local LOCAL_UNITS = { zhCN = true, zhTW = true, koKR = true }
-local useLocalUnits = LOCAL_UNITS[GetLocale()]
-
 local function Scaled(value, divisor, suffix)
     return (format("%.1f", value / divisor):gsub("%.0$", "")) .. suffix
 end
 
 local function Abbreviate(value)
-    if useLocalUnits and addon.TextSystem then
+    if addon.TextSystem and addon.TextSystem.UsesLocaleUnits() then
         return addon.TextSystem.AbbreviateLargeNumbers(value)
     end
     if value >= 1e9 then return Scaled(value, 1e9, "B") end
@@ -586,7 +584,8 @@ end
 local function UpdateAlt()
     local maximum = UnitPowerMax("player", 0)
     alt.bar:SetMinMaxValues(0, maximum > 0 and maximum or 1)
-    alt.bar:SetValue(UnitPower("player", 0))
+    currAltValue = UnitPower("player", 0)
+    alt.bar:SetValue(currAltValue)
     UpdateNumericText(alt)
 end
 
@@ -829,6 +828,11 @@ local function OnFrameUpdate()
             StartFullPowerIfFull(value)
         end
         currPowerValue = value
+        UpdatePower()
+    end
+
+    if alt:IsShown() and UnitPower("player", 0) ~= currAltValue then
+        UpdateAlt()
     end
 end
 
@@ -937,7 +941,7 @@ local function RegisterDataEvents()
     dataFrame:RegisterEvent("UNIT_HEALTH")
     dataFrame:RegisterEvent("UNIT_MAXHEALTH")
     dataFrame:RegisterEvent("UNIT_DISPLAYPOWER")
-    for event in pairs(POWER_EVENTS) do dataFrame:RegisterEvent(event) end
+    for event in pairs(MAX_POWER_EVENTS) do dataFrame:RegisterEvent(event) end
     for event in pairs(CAST_EVENTS) do dataFrame:RegisterEvent(event) end
 end
 
@@ -970,12 +974,8 @@ dataFrame:SetScript("OnEvent", function(_, event, unit)
 
     if event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" then
         UpdateHealth()
-    elseif POWER_EVENTS[event] then
-        if event:find("^UNIT_MAX") then
-            UpdateMaxPower()
-        else
-            UpdatePower()
-        end
+    elseif MAX_POWER_EVENTS[event] then
+        UpdateMaxPower()
         if alt:IsShown() then UpdateAlt() end
     elseif event == "UNIT_DISPLAYPOWER" then
         UpdatePowerBar()
@@ -1073,6 +1073,8 @@ function addon.ApplyPersonalResourceSystem()
         end)
         content:SetScript("OnHide", function()
             dataFrame:UnregisterAllEvents()
+            -- Deaf to cast events from here on, so a cast ending while hidden would leave its cost behind.
+            predictedPowerCost = nil
             UnregisterPredictionCallbacks()
             EndFeedback()
             RemoveFullPowerAnims()

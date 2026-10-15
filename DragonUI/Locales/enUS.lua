@@ -26,6 +26,11 @@ L["Cannot move frames during combat!"] = true
 L["Cannot open options in combat."] = true
 L["Options panel not available. Try /reload."] = true
 
+-- Farm mode
+L["Farm mode enabled"] = true
+L["Farm mode disabled"] = true
+L["Minimap module not available."] = true
+
 -- Module availability
 L["Editor mode not available."] = true
 L["Position editor not available."] = true
@@ -55,6 +60,7 @@ L["/dragonui config - Open configuration"] = true
 L["/dragonui edit - Toggle editor mode (move UI elements)"] = true
 L["/dragonui reset - Reset all positions to defaults"] = true
 L["/dragonui status - Show module status"] = true
+L["/dragonui farm - Toggle farm mode (big minimap, chrome hidden)"] = true
 L["/dragonui kb - Toggle keybind mode"] = true
 L["/dragonui version - Show version info"] = true
 L["/dragonui help - Show this help"] = true
@@ -397,6 +403,7 @@ L["Range Indicator"] = true
 L["Color action button icons when target is out of range or ability is unusable."] = true
 L["Cast Bar"] = true
 L["Custom player, target, and focus cast bars"] = true
+L["Interrupted by %s"] = true
 L["Multicast"] = true
 L["Shaman totem bar positioning and styling"] = true
 L["Player Frame"] = true
@@ -563,6 +570,7 @@ L["Micro menu and bags system styling and positioning"] = true
 L["%s's Inventory"] = true
 L["%s's Bank"] = true
 L["Bags"] = true
+L["Bank"] = true
 L["|cff00ff00Left-Click|r to toggle bag display"] = true
 L["|cff00ff00Right-Click|r to toggle inventory"] = true
 L["|cff00ff00Right-Click|r to toggle bank"] = true
@@ -649,7 +657,10 @@ L["Quest Dialog"] = true
 L["Retail-style quest and gossip window chrome"] = true
 L["Sell all junk items"] = true
 L["You are about to sell all junk items and will not be able to buy them back.\n\nAre you sure you want to proceed?"] = true
-L["Sold %d junk item(s)."] = true
+L["Repaired all items for %s."] = true
+L["Repaired all items for %s using guild funds."] = true
+L["Not enough gold to repair all items."] = true
+L["Sold %d junk item(s) for %s."] = true
 
 -- World Map
 L["World Map"] = true
@@ -695,6 +706,13 @@ L["Plays a sound and flashes the screen edges when your HP drops below the thres
 L["Personal Resource Display"] = true
 L["PersonalResource"] = true
 L["Add Health and Resource below your Character."] = true
+L["Combo Points"] = true
+L["Combo points as orbs under the player frame and/or gems around the target portrait."] = true
+L["ComboPoints"] = "Combo Points"
+L["DKRunes"] = "Death Knight Runes"
+L["Orb Style"] = true
+L["Hide When Empty"] = true
+L["Hide the orbs and the gems at 0 points instead of showing them empty."] = true
 L["Swing Timer"] = true
 L["Show a bar with the time left until each weapon's next swing."] = true
 L["SwingTimerMainHand"] = "Main Hand Swing Timer"
@@ -963,6 +981,13 @@ L["Border Style"] = true
 L["Detailed"] = true
 L["Rounded"] = true
 L["Square"] = true
+L["DragonUI Square"] = true
+L["Forever Square"] = true
+L["Square Border"] = true
+L["Forever Frame"] = true
+L["Thin Line"] = true
+L["Top Arrow"] = true
+L["Rounded Corners"] = true
 L["Aura Tooltips"] = true
 L["Debuff Icon Scale"] = true
 L["Debuffs Per Row"] = true
@@ -1028,3 +1053,42 @@ L["Show Cooldown Text"] = true
 L["Min Duration"] = true
 L["Whole Seconds"] = true
 L["Show cooldown text in whole seconds, without the tenths under 5 seconds."] = true
+
+-- Addon Manager
+L["Addon Manager"] = true
+L["Enable and disable your addons in game from an AddOns button in the Esc menu"] = true
+L["Load out of date AddOns"] = true
+L["Search..."] = true
+L["Addon Memory:"] = true
+L["Enable All"] = true
+L["Disable All"] = true
+L["OK / Reload"] = true
+L["Parent Disabled"] = true
+L["Protected"] = true
+L["Turn it back on from the AddOns button in the Esc menu."] = true
+L["Turn it back on from the AddOns list at character selection."] = true
+
+-- ============================================================================
+-- PROFESSIONS
+-- ============================================================================
+L["Professions"] = true
+L["Forever-style professions window that keeps every stock function."] = true
+L["Skill-up recipes only"] = true
+L["Categories"] = true
+L["Slots"] = true
+L["Reset filters"] = true
+L["Expand All"] = true
+L["Collapse All"] = true
+L["No recipes found"] = true
+L["Not available in combat"] = true
+L["First Profession"] = true
+L["Second Profession"] = true
+L["Visit a profession trainer in a major city to learn a new profession. You may have two professions. You may have any combination of gathering and production professions."] = true
+L["Visit a trainer to learn cooking. Cooking lets you learn recipes to create food that heals you out of combat and grants you temporary buffs."] = true
+L["Visit a trainer to learn fishing. Fishing lets you catch fish and other strange things from water. Fish can be cooked into delicious meals with the Cooking skill."] = true
+L["Visit a trainer to learn first aid. First aid lets you turn cloth into bandages for healing yourself and others."] = true
+L["Track Recipe"] = true
+L["Set Favorite"] = true
+L["Guaranteed chance of gaining %d skill ups"] = true
+L["High chance of gaining skill"] = true
+L["Low chance of gaining skill"] = true

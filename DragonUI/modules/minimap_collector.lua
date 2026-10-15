@@ -29,6 +29,7 @@ local mathmax, mathmin, mathfloor, mathceil =
 local mathrad, mathdeg, mathcos, mathsin, mathpi =
       math.rad, math.deg, math.cos, math.sin, math.pi
 local mathatan2, mathatan = math.atan2, math.atan
+local mathabs = math.abs
 local strlower, tsort = string.lower, table.sort
 
 -- ----------------------------------------------------------------------------
@@ -159,9 +160,17 @@ local function SafeSet(tex, primary, fallback)
     end
 end
 
+-- The square DragonUI frame's chevron differs from the round ring's, so it gets its own cut.
+local function ClassicIconPath()
+    if deps.IsDragonUISquareFrame and deps.IsDragonUISquareFrame() then
+        return deps.DRAGONUI_SQUARE_COLLECTOR_ICON
+    end
+    return deps.DRAGONUI_CLASSIC_COLLECTOR_ICON
+end
+
 local function SetClassicIcon(tex)
     if not tex then return end
-    SafeSet(tex, deps.DRAGONUI_CLASSIC_COLLECTOR_ICON)
+    SafeSet(tex, ClassicIconPath())
     tex:SetTexCoord(0, 1, 0, 1)
 end
 
@@ -206,9 +215,9 @@ local function SetClassicGlow(tex)
     if not tex then return end
     local a = deps.addon
     if a and a.SafeSetTexture then
-        a:SafeSetTexture(tex, deps.DRAGONUI_CLASSIC_COLLECTOR_ICON)
+        a:SafeSetTexture(tex, ClassicIconPath())
     else
-        tex:SetTexture(deps.DRAGONUI_CLASSIC_COLLECTOR_ICON or WHITE_TEX)
+        tex:SetTexture(ClassicIconPath() or WHITE_TEX)
     end
     tex:SetTexCoord(0, 1, 0, 1)
 end
@@ -421,8 +430,24 @@ local function PositionByAngle(btn, angle)
     local n = NormalizeAngle(angle)
     local r = GetOrbitRadius(btn)
     local rad = mathrad(n)
+    local cosA = mathcos(rad)
+    local sinA = mathsin(rad)
+    local x, y
+    if GetMinimapShape and GetMinimapShape() == "SQUARE" then
+        local maxCoord = mathmax(mathabs(cosA), mathabs(sinA))
+        if maxCoord > 0 then
+            x = (cosA / maxCoord) * r
+            y = (sinA / maxCoord) * r
+        else
+            x = cosA * r
+            y = sinA * r
+        end
+    else
+        x = cosA * r
+        y = sinA * r
+    end
     btn:ClearAllPoints()
-    btn:SetPoint("CENTER", Minimap, "CENTER", mathcos(rad) * r, mathsin(rad) * r)
+    btn:SetPoint("CENTER", Minimap, "CENTER", x, y)
     btn.DragonUI_Angle = n
 end
 
@@ -703,12 +728,17 @@ local function PositionCollector()
     c:SetScale(GetMinimapScale())
     c:ClearAllPoints()
 
+    local sbtn = GetSettingsBtn()
     if GetStyle() == STYLE_CLASSIC then
-        c:SetPoint("RIGHT", Minimap, "LEFT", -5, 0)
+        -- The square frame's arrow sits further out; its button's edge clears the tip as the ring's does.
+        if sbtn and deps.IsDragonUISquareFrame and deps.IsDragonUISquareFrame() then
+            c:SetPoint("RIGHT", sbtn, "LEFT", 0, 0)
+        else
+            c:SetPoint("RIGHT", Minimap, "LEFT", -5, 0)
+        end
         return
     end
 
-    local sbtn = GetSettingsBtn()
     if sbtn then c:SetPoint("TOPRIGHT", sbtn, "TOPLEFT", -5, 0) end
 end
 
@@ -1298,10 +1328,18 @@ local function ApplyClassicStyle(btn)
     btn:SetScript("OnUpdate", nil)
     btn.DragonUI_Dragging = false
     btn.DragonUI_DragMoved = false
-    btn:SetSize(21, 21)
     btn:SetScale(1)
     btn:ClearAllPoints()
-    btn:SetPoint("RIGHT", Minimap, "LEFT", 16.5, -2)
+    local size, x
+    if deps.GetSquareArrowPlacement then size, x = deps.GetSquareArrowPlacement(btn) end
+    if size then
+        -- An exact copy of the square frame's left chevron, laid over it.
+        btn:SetSize(size, size)
+        btn:SetPoint("CENTER", Minimap, "CENTER", x, 0)
+    else
+        btn:SetSize(21, 21)
+        btn:SetPoint("RIGHT", Minimap, "LEFT", 16.5, -2)
+    end
 
     if btn.icon then
         btn.icon:ClearAllPoints()

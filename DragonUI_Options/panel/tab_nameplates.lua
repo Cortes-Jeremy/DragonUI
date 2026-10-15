@@ -517,7 +517,7 @@ local function BuildBehaviorSubTab(scroll)
         label = LO["Collider Width"],
         desc = LO["Sets the width of the virtual collider centered on each nameplate used to detect overlaps."],
         dbPath = DB .. ".retailStackingXSpace",
-        min = 20, max = 200, step = 1,
+        min = 0, max = 200, step = 1,
         width = 200,
         disabled = IsRetailStackingDisabled,
         callback = RefreshNameplates,
@@ -537,7 +537,7 @@ local function BuildBehaviorSubTab(scroll)
         label = LO["Vertical Offset"],
         desc = LO["Vertical offset baseline for Retail-like stacking."],
         dbPath = DB .. ".retailStackingOriginY",
-        min = 0, max = 50, step = 1,
+        min = 0, max = 100, step = 1,
         width = 200,
         disabled = IsRetailStackingDisabled,
         callback = RefreshNameplates,
@@ -1299,6 +1299,17 @@ local function BuildBarsSubTab(scroll)
     })
 
     C:AddToggle(castSection, {
+        label = LO["Spell Icon Left of Bar"],
+        desc = LO["Modern style: show the spell icon to the left of the cast bar instead of under it."],
+        dbPath = DB .. ".castBarModernIconLeft",
+        disabled = function()
+            local style = C:GetDBValue(DB .. ".plateStyle")
+            return IsCastBarDisabled() or style == "legacy" or style == "classic"
+        end,
+        callback = RefreshNameplates,
+    })
+
+    C:AddToggle(castSection, {
         label = LO["Show Party/Raid Cast Bars"],
         desc = LO["Also show cast bars on party and raid allies, even when you are not targeting them."],
         dbPath = DB .. ".showPartyRaidCastBars",
@@ -1376,10 +1387,8 @@ local function BuildBarsSubTab(scroll)
     })
 
     if offTargetEnabled then
-        local aggressiveDesc = LO["Off-Target Aggressive Mode Desc"]
-        if offTargetAggressive and not offTargetPlayersOnly then
-            aggressiveDesc = aggressiveDesc .. "\n\n" .. LO["Off-Target Aggressive Warning"]
-        end
+        local aggressiveDesc = LO["Off-Target Aggressive Mode Desc"] .. "\n\n" .. LO["Off-Target Aggressive Warning"]
+            .. "\n\n" .. LO["Off-Target Aggressive Ignored"]
 
         C:AddToggle(offTargetSection, {
             label = LO["Off-Target Aggressive Mode"],
@@ -1396,10 +1405,8 @@ local function BuildBarsSubTab(scroll)
         })
 
         if offTargetAggressive then
-            local playersOnlyDesc = LO["Off-Target Players Only Desc"]
-            if offTargetPlayersOnly then
-                playersOnlyDesc = playersOnlyDesc .. "\n\n" .. LO["Off-Target Players Only Warning"]
-            end
+            local playersOnlyDesc = LO["Off-Target Players Only Desc"] .. "\n\n" .. LO["Off-Target Players Only Warning"]
+                .. "\n\n" .. LO["Off-Target Aggressive Ignored"]
 
             C:AddToggle(offTargetSection, {
                 label = LO["Off-Target Players Only"],

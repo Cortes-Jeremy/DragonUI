@@ -715,6 +715,91 @@ local function BuildEnhancementsTab(scroll)
         disabled = function() return not IsEnabled("tooltip") end,
         requiresReload = false,
     })
+
+    -- ====================================================================
+    -- MERCHANT AUTO SERVICES
+    -- ====================================================================
+    local merchantSection = C:AddSection(scroll, LO["Merchant Auto Services"])
+
+    C:AddDescription(merchantSection, LO["Automatically repair items and sell junk when you open a merchant window. Requires the Merchant module."])
+
+    C:AddToggle(merchantSection, {
+        label = LO["Auto Repair"],
+        desc = LO["Automatically repair all your items when a merchant window opens."],
+        getFunc = function()
+            return GetModuleField("merchant", "autoRepair") == true
+        end,
+        setFunc = function(val)
+            EnsureModuleTable("merchant").autoRepair = val
+        end,
+        disabled = function() return not IsEnabled("merchant") end,
+    })
+
+    C:AddToggle(merchantSection, {
+        label = LO["Use Guild Funds"],
+        desc = LO["Pay for automatic repairs with guild bank money when you have the right and the guild can cover the cost."],
+        getFunc = function()
+            return GetModuleField("merchant", "autoRepairGuild") == true
+        end,
+        setFunc = function(val)
+            EnsureModuleTable("merchant").autoRepairGuild = val
+        end,
+        disabled = function() return not IsEnabled("merchant") or GetModuleField("merchant", "autoRepair") ~= true end,
+        indent = 1,
+    })
+
+    C:AddToggle(merchantSection, {
+        label = LO["Auto Sell Junk"],
+        desc = LO["Automatically sell grey (junk) items when a merchant window opens."],
+        getFunc = function()
+            return GetModuleField("merchant", "autoSellJunk") == true
+        end,
+        setFunc = function(val)
+            EnsureModuleTable("merchant").autoSellJunk = val
+        end,
+        disabled = function() return not IsEnabled("merchant") end,
+    })
+
+    -- ====================================================================
+    -- LOOT ROLL
+    -- ====================================================================
+    C:AddSpacer(scroll)
+    local lootRollSection = C:AddSection(scroll, LO["Loot Roll"])
+
+    C:AddToggle(lootRollSection, {
+        label = LO["Auto Greed/DE"],
+        desc = LO["Automatically select greed or disenchant (when available) on green quality items. This will only work if you are the max level."],
+        dbPath = "lootroll.autoRoll",
+        requiresReload = false,
+    })
+
+    -- ====================================================================
+    -- AUTO-ACCEPT
+    -- ====================================================================
+    C:AddSpacer(scroll)
+    local autoAcceptSection = C:AddSection(scroll, LO["Auto-Accept"])
+
+    C:AddDescription(autoAcceptSection, LO["Party invites from the players you pick below are accepted for you; anyone else is left for you to answer."])
+
+    local function RefreshAutoAcceptCaches(value)
+        if value and addon.RefreshAutoAcceptCaches then addon.RefreshAutoAcceptCaches() end
+    end
+
+    C:AddToggle(autoAcceptSection, {
+        label = LO["Accept Invites from Friends"],
+        desc = LO["Automatically accept party invites from players on your friends list."],
+        dbPath = "autoaccept.friends",
+        callback = RefreshAutoAcceptCaches,
+        requiresReload = false,
+    })
+
+    C:AddToggle(autoAcceptSection, {
+        label = LO["Accept Invites from Guild Members"],
+        desc = LO["Automatically accept party invites from members of your guild."],
+        dbPath = "autoaccept.guild",
+        callback = RefreshAutoAcceptCaches,
+        requiresReload = false,
+    })
 end
 
 -- Register the tab (order 11 = after Quest Tracker, before Profiles)

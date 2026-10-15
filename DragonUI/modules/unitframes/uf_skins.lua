@@ -334,6 +334,9 @@ UF.PARTY_ICONS = {
     role = { x = 103, y = -5, w = 12, h = 12 },
 }
 
+-- Forever badge CENTER on the party PVPIcon's: the group emblem's measured centre, at Forever's 0.6 party scale.
+UF.PARTY_PVP_BADGE = { x = -1, y = 2.5, scale = 0.6 }
+
 -- The status icons follow the unit frame art.
 function UF.GetStatusIconStyle()
     return UF.GetFrameStyle() == "forever" and "forever" or "dragonui"
@@ -548,5 +551,9 @@ function UF.RefreshSkins()
     end
     if addon.RefreshDarkModeUnitFrames then
         addon.RefreshDarkModeUnitFrames()
+    end
+    -- Combo points' Auto location and orb style follow the frame art.
+    if addon.RefreshComboPointsSystem then
+        addon.RefreshComboPointsSystem()
     end
 end

@@ -48,6 +48,16 @@ L["Created and maintained by NeticSoul, with community contributions."] = true
 L["Language"] = true
 L["Choose the language used by the DragonUI interface."] = true
 L["Follow the client language"] = true
+L["Number Abbreviations"] = true
+L["How unit frames, nameplates and the resource display shorten large numbers."] = true
+
+-- Loot Roll
+L["Auto Greed/DE"] = true
+L["Automatically select greed or disenchant (when available) on green quality items. This will only work if you are the max level."] = true
+
+-- Settings window
+L["Settings Window"] = true
+L["Size of this window on top of your UI scale; 1.0 matches the other panels. It never grows past the screen."] = true
 
 L["Commands: /dragonui, /dui, /pi \226\128\148 /dragonui edit (editor) \226\128\148 /dragonui help"] = true
 L["GitHub (select and Ctrl+C to copy):"] = true
@@ -112,7 +122,9 @@ L["Modern reskin of the Blizzard character window."] = true
 L["Enable Character Panel"] = true
 L["Apply the DragonUI reskin to the character window."] = true
 L["Class Portrait"] = true
-L["Show your class icon in the portrait instead of your character's face."] = true
+L["Portrait"] = true
+L["Class Icon"] = true
+L["Specialization Icon"] = true
 L["Class-Colored Level Text"] = true
 L["Color the class name in the \"Level X Race Class\" line."] = true
 -- Pets & Mounts
@@ -124,6 +136,12 @@ L["Enable Enhanced Tooltips"] = true
 L["KeyBind Mode"] = true
 L["Quest Tracker"] = true
 L["Version Check"] = true
+
+-- Farm mode
+L["Farm Mode"] = true
+L["Extra scale"] = true
+L["Bigger minimap with the surrounding clutter hidden."] = true
+L["Extra scale applied on top of the minimap scale."] = true
 
 -- Module toggle descriptions
 L["Enable DragonUI player castbar styling."] = true
@@ -151,6 +169,13 @@ L["Border Style"] = true
 L["Detailed"] = true
 L["Rounded"] = true
 L["Square"] = true
+L["DragonUI Square"] = true
+L["Forever Square"] = true
+L["Square Border"] = true
+L["Forever Frame"] = true
+L["Thin Line"] = true
+L["Top Arrow"] = true
+L["Rounded Corners"] = true
 L["When enabled, a 'Weapon Enchants' mover appears in Editor Mode that you can drag to any position on screen."] = true
 L["Positions"] = true
 L["Player Buffs & Debuffs"] = true
@@ -337,6 +362,14 @@ L["Guild Bank"] = true
 L["Inspect"] = true
 L["Merchant"] = true
 L["Retail-style vendor window chrome"] = true
+L["Merchant Auto Services"] = true
+L["Automatically repair items and sell junk when you open a merchant window. Requires the Merchant module."] = true
+L["Auto Repair"] = true
+L["Automatically repair all your items when a merchant window opens."] = true
+L["Use Guild Funds"] = true
+L["Pay for automatic repairs with guild bank money when you have the right and the guild can cover the cost."] = true
+L["Auto Sell Junk"] = true
+L["Automatically sell grey (junk) items when a merchant window opens."] = true
 L["Quest Dialog"] = true
 L["Retail-style quest and gossip window chrome"] = true
 L["Trade"] = true
@@ -487,6 +520,8 @@ L["Quest Item Glow"] = true
 L["Highlight quest items with a golden border."] = true
 L["Glow Intensity"] = true
 L["Opacity of the quality ring on item slots."] = true
+L["Item Count in Tooltip"] = true
+L["Show how many of the hovered item you own in total, across your bags and bank."] = true
 L["Quality Filter Row"] = true
 L["Show the rarity filter dots at the bottom of the bag frame."] = true
 
@@ -717,6 +752,8 @@ L["Show Icon"] = true
 L["Icon Size"] = true
 L["Modern Icon Border"] = true
 L["Modern Icon Border Desc"] = "Frame the spell icon with the DragonUI action-bar border instead of the classic ring."
+L["Spell Icon Left of Bar"] = true
+L["Modern style: show the spell icon to the left of the cast bar instead of under it."] = true
 L["Modern Icon Border Debuff Desc"] = "Frame aura icons with the DragonUI action-bar border."
 L["Text Mode"] = true
 L["Simple (Name Only)"] = true
@@ -729,6 +766,10 @@ L["Hold Time (Success)"] = true
 L["How long the bar stays after a successful cast."] = true
 L["Hold Time (Interrupt)"] = true
 L["How long the bar stays after being interrupted."] = true
+L["Shake on Interrupt"] = true
+L["Shake the cast bar briefly when it gets interrupted."] = true
+L["Show Interrupter"] = true
+L["Show the name of whoever interrupted the cast."] = true
 L["Reset Position"] = true
 L["Player castbar position reset."] = true
 L["Castbar detached - positioned freely via Editor Mode"] = true
@@ -1335,6 +1376,7 @@ L["Off-Target Players Only"] = "Players only"
 L["Off-Target Players Only Desc"] = "Aggressive mode for players only. World mobs stay on safe mode."
 L["Off-Target Aggressive Warning"] = "|cffffffffWarning:|r\n- If a cast is cancelled by moving or jumping (fake cast), the bar still runs to the end.\n- Same-name mobs may show the bar on the wrong nameplate."
 L["Off-Target Players Only Warning"] = "|cffffffffWarning:|r\n- If a cast is cancelled by moving or jumping (fake cast), the bar still runs to the end."
+L["Off-Target Aggressive Ignored"] = "Not used with awesome_wotlk or with a client that shows cast bars on every nameplate. Those already know who is casting, so safe mode is used instead."
 L["Icons"] = true
 L["Quest"] = true
 L["Show Raid Markers"] = true
@@ -1595,3 +1637,34 @@ L["Lower rank selector"] = true
 L["How a spell card offers its lower ranks: a menu under the icon or a side flyout."] = true
 L["Menu under the icon"] = true
 L["Side flyout"] = true
+
+-- ============================================================================
+-- PROFESSIONS
+-- ============================================================================
+L["Professions"] = true
+L["Forever-style professions window with side tabs and an overview page."] = true
+L["Enable Professions"] = true
+L["Use the Forever professions window instead of the stock one."] = true
+L["Professions Window Scale"] = true
+L["Scales the whole professions window; the room it takes beside other panels follows its size."] = true
+L["Side Tabs Scale"] = true
+L["Scales only the profession tabs beside the window, on top of the window scale."] = true
+L["Professions Micro Button"] = true
+L["Show the Professions button in the micro menu. It opens the professions overview."] = true
+L["Combo Points"] = true
+L["Combo points as orbs under the player frame and/or gems around the target portrait."] = true
+L["Location"] = true
+L["Auto follows the unit frame art: orbs under the player with the DragonUI art, gems on the target with the Forever art."] = true
+L["Player + Target"] = true
+L["Orb Style"] = true
+L["Auto follows the unit frame art. Forever uses its bronze orbs for rogues and druids alike."] = true
+L["Hide When Empty"] = true
+L["Hide the orbs and the gems at 0 points instead of showing them empty."] = true
+
+-- Auto-Accept
+L["Auto-Accept"] = true
+L["Party invites from the players you pick below are accepted for you; anyone else is left for you to answer."] = true
+L["Accept Invites from Friends"] = true
+L["Automatically accept party invites from players on your friends list."] = true
+L["Accept Invites from Guild Members"] = true
+L["Automatically accept party invites from members of your guild."] = true

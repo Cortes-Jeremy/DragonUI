@@ -385,6 +385,9 @@ end
 R.swingTimerToggle = function()
     if addon.RefreshSwingTimerSystem then addon.RefreshSwingTimerSystem() end
 end
+R.comboPoints = function()
+    if addon.RefreshComboPointsSystem then addon.RefreshComboPointsSystem() end
+end
 
 E.refresh = R
 
@@ -1135,6 +1138,7 @@ E.Register("party", { settings = Join({
         hidden = function() return GetDB("unitframe.party.orientation") ~= "horizontal" end }),
     Section(T("Appearance"), true),
     Check(T("Class Color Health"), "unitframe.party.classcolor", R.partyText),
+    Drop(T("PvP Icon Style"), "unitframe.party.pvp_icon_style", PVP_STYLES, R.partyText),
     Section(T("Text Display"), true, nil, PreviewTexts("party")),
     TextRows("party", R.partyText),
 }) })
@@ -1431,9 +1435,19 @@ local function SexyMapMode()
     return GetDB("modules.minimap.sexymap_mode")
 end
 
+local function SquareMinimap()
+    local style = GetDB("minimap.style")
+    return style == "dragonui_square" or style == "forever_square"
+end
+
 local function DecorationsOff()
     local mode = SexyMapMode()
     return GetDB("minimap.animated_border_enabled") ~= true or mode == "hybrid" or mode == "sexymap"
+end
+
+-- Round and square styles offer different presets, so each keeps its own choice.
+local function DecorationPresetPath()
+    return SquareMinimap() and "minimap.animated_border_square_preset" or "minimap.animated_border_preset"
 end
 
 local function NoDecorations()
@@ -1456,13 +1470,18 @@ end
 local function ApplyDecorationAutoScale()
     if GetDB("minimap.animated_border_scale_auto") == false then return end
     local hidden = GetDB("minimap.animated_border_hide_dragonui_border") == true
-    SetDB("minimap.animated_border_scale", hidden and 1 or 0.9)
+    SetDB("minimap.animated_border_scale", (hidden or SquareMinimap()) and 1 or 0.9)
     SetDB("minimap.animated_border_scale_auto", true)
 end
 
 -- The Forever ring has no arrow collector, so the collector style is locked to the circle there.
 local function ForeverMinimap()
-    return GetDB("minimap.style") == "forever" and SexyMapMode() ~= "hybrid"
+    local style = GetDB("minimap.style")
+    return (style == "forever" or style == "forever_square") and SexyMapMode() ~= "hybrid"
+end
+
+local function ForeverSquareMinimap()
+    return GetDB("minimap.style") == "forever_square" and SexyMapMode() ~= "hybrid"
 end
 
 local function CollectorOff()
@@ -1474,8 +1493,21 @@ E.Register("minimap", { settings = {
     Slider(T("Scale"), "minimap.scale", 0.5, 2.0, 0.01, R.minimap),
     Drop(T("Style"), "minimap.style", {
         { "dragonui", T("DragonUI") },
+        { "dragonui_square", T("DragonUI Square") },
         { "forever", T("Forever") },
+        { "forever_square", T("Forever Square") },
     }, R.minimap, { after = function() E.Rebuild() end }),
+    Drop(T("Square Border"), "minimap.forever_square_border", {
+        { "frame", T("Forever Frame") },
+        { "thin", T("Thin Line") },
+    }, R.minimap, { hidden = function() return not ForeverSquareMinimap() end, after = function() E.Rebuild() end }),
+    Check(T("Top Arrow"), "minimap.square_top_arrow", R.minimap, {
+        get = function() return GetDB("minimap.square_top_arrow") ~= false end,
+        hidden = function() return not ForeverSquareMinimap() end,
+        disabled = function() return GetDB("minimap.forever_square_border") == "thin" end }),
+    Check(T("Rounded Corners"), "minimap.forever_square_rounded", R.minimap, {
+        hidden = function() return not ForeverSquareMinimap() end,
+        disabled = function() return GetDB("minimap.forever_square_border") == "thin" end }),
     Section(T("Minimap Buttons Collector"), true),
     Check(T("Enable"), "minimap.collector_enabled", R.minimap, {
         get = function() return GetDB("minimap.collector_enabled") ~= false end,
@@ -1525,7 +1557,12 @@ E.Register("minimap", { settings = {
             E.Rebuild()
         end }),
     Drop(T("Preset"), "minimap.animated_border_preset", DecorationPresets, R.minimapDecor, {
-        hidden = NoDecorations, disabled = DecorationsOff }),
+        hidden = NoDecorations, disabled = DecorationsOff,
+        get = function() return GetDB(DecorationPresetPath()) end,
+        set = function(value)
+            SetDB(DecorationPresetPath(), value)
+            Immediate(R.minimapDecor)
+        end }),
     Check(T("Animated Effects"), "minimap.animated_border_animations", R.minimapDecor, {
         hidden = NoDecorations, disabled = DecorationsOff }),
     Check(T("Hide DragonUI Border"), "minimap.animated_border_hide_dragonui_border", R.minimapDecor, {
@@ -1712,6 +1749,16 @@ E.Register("personalresource", { settings = {
     Check(T("Show Class Color"), "personalresource.class_color", R.personalResource),
     Check(T("Show Bar Text"), "personalresource.bar_text", R.personalResource),
 } })
+
+-- The player's combo point orbs; their location and the target gems stay in Options > Unit Frames.
+E.Register("combopoints", { settings = {
+    Drop(T("Orb Style"), "combopoints.style", STYLE_ITEMS, R.comboPoints),
+    Check(T("Hide When Empty"), "combopoints.hide_empty", R.comboPoints, {
+        tooltip = T("Hide the orbs and the gems at 0 points instead of showing them empty.") }),
+} })
+
+-- Position only: the dialog keeps its coordinate rows and the reset that re-attaches them to the player frame.
+E.Register("dkrunes", { settings = {} })
 
 -- Forever's swing timer rows, ranges at our HUD's 0.72 (see swingtimer.lua), one dialog per bar.
 local function SwingTimerSettings(hand)
@@ -1942,7 +1989,7 @@ Fades("boss", Dotted("unitframe.boss"), R.boss)
 -- Dialogs with few settings and no wide dropdowns shrink to the width of their coordinate rows.
 for _, frameName in ipairs({
     "boss", "bagsbar", "stance", "totembar", "xpbar", "repbar", "tooltip", "questtracker",
-    "weapon_enchants", "tot", "fot", "petbar",
+    "weapon_enchants", "tot", "fot", "petbar", "combopoints", "dkrunes",
 }) do
     local def = E.Get(frameName)
     if def then def.compact = true end
