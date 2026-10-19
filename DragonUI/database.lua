@@ -234,16 +234,17 @@ local defaults = {
         -- Level-up banner (the enable flag is modules.levelupenhance.enabled; position in widgets.levelupenhance)
         levelupenhance = {
             scale = 1,            -- Banner and list scale (0.6-1.6)
-            show_unlocks = true,  -- List what the level unlocks (abilities, features, dungeons, raids, battlegrounds)
+            show_unlocks = true,  -- Show what the level unlocks (abilities, features, dungeons, raids, battlegrounds)
             auto_expand = true,   -- Open the list on its own, as retail shows the unlocks without a click
+            unlock_style = "banner", -- banner: one at a time inside the banner, as retail | list: a list under it
             chat_unlocks = true,  -- Print the unlocks in the windows that get the level-up message
             pet_levelup = true,   -- Banner when a hunter pet levels up
         },
         -- Combo points (the enable flag is modules.combopoints.enabled)
         combopoints = {
             location = "auto",    -- auto | both | player | target; auto follows unitframe.frame_style
-            style = "auto",       -- auto | dragonui | forever: art of the player bar (retail or c60 orbs); auto follows unitframe.frame_style
-            hide_empty = false,   -- Hide the bar and the gems at 0 points instead of showing empty ones
+            style = "auto",       -- auto | dragonui | forever: art of the orbs (retail or c60); auto follows unitframe.frame_style
+            hide_empty = false,   -- Hide the orbs at 0 points instead of showing empty ones
             detached = false,     -- Player bar moved in the editor: follows widgets.combopoints instead of the player frame
         },
         -- Swing timers, one table per bar (the enable flag is modules.swingtimer.enabled)
@@ -733,6 +734,7 @@ local defaults = {
                 classcolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
+                portrait_off = false, -- Portrait-off frame: the portrait art without its ring (uf_compact.lua)
                 textFormat = "both",
                 showHealthTextAlways = false,
                 showManaTextAlways = false,
@@ -770,6 +772,7 @@ local defaults = {
                 reactioncolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
+                portrait_off = false, -- Portrait-off frame: the portrait art without its ring (uf_compact.lua)
                 breakUpLargeNumbers = true,
                 textFormat = 'both',
                 showHealthTextAlways = false,
@@ -791,6 +794,7 @@ local defaults = {
                 reactioncolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
+                portrait_off = false, -- Portrait-off frame: the portrait art without its ring (uf_compact.lua)
                 breakUpLargeNumbers = true,
                 textFormat = 'both',
                 showHealthTextAlways = false,
@@ -845,6 +849,7 @@ local defaults = {
                 reactioncolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
+                portrait_off = false, -- Portrait-off frame: the portrait art without its ring (uf_compact.lua)
                 scale = 1.0,
                 x = -35,
                 y = -30,
@@ -858,6 +863,7 @@ local defaults = {
                 reactioncolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
+                portrait_off = false, -- Portrait-off frame: the portrait art without its ring (uf_compact.lua)
                 scale = 1.0,
                 x = -35,
                 y = -30,
@@ -1005,7 +1011,7 @@ local defaults = {
                 enabled = false, -- Small health and power bar under the character (settings in editor mode)
             },
             combopoints = {
-                enabled = true, -- Retail orb bar under the player and/or Forever gem arc on the target (Options > Unit Frames)
+                enabled = true, -- Retail orb bar under the player and/or small orbs on the target (Options > Unit Frames)
             },
             swingtimer = {
                 enabled = false, -- Main hand, off hand and ranged swing bars (settings in editor mode)

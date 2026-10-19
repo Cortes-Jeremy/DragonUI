@@ -1761,19 +1761,27 @@ E.Register("personalresource", { settings = {
 
 E.Register("levelupenhance", { settings = {
     Slider(T("Scale"), "levelupenhance.scale", 0.6, 1.6, 0.05, R.levelUp, { resize = true }),
-    Check(T("List Unlocks"), "levelupenhance.show_unlocks", R.levelUp, { after = function() E.Rebuild() end }),
+    Check(T("Show Unlocks"), "levelupenhance.show_unlocks", R.levelUp, { after = function() E.Rebuild() end }),
+    Drop(T("Unlock Style"), "levelupenhance.unlock_style", {
+        { "banner", T("One at a Time") },
+        { "list", T("List") },
+    }, R.levelUp, {
+        disabled = function() return not GetDB("levelupenhance.show_unlocks") end,
+        after = function() E.Rebuild() end }),
     Check(T("Open the List Automatically"), "levelupenhance.auto_expand", R.levelUp, {
-        disabled = function() return not GetDB("levelupenhance.show_unlocks") end }),
+        disabled = function()
+            return not GetDB("levelupenhance.show_unlocks") or GetDB("levelupenhance.unlock_style") ~= "list"
+        end }),
     Check(T("Unlocks in Chat"), "levelupenhance.chat_unlocks", nil, {
         disabled = function() return not GetDB("levelupenhance.show_unlocks") end }),
     Check(T("Pet Level-Up Banner"), "levelupenhance.pet_levelup"),
 } })
 
--- The player's combo point orbs; their location and the target gems stay in Options > Unit Frames.
+-- The player's combo point orbs; their location and the target's orbs stay in Options > Unit Frames.
 E.Register("combopoints", { settings = {
     Drop(T("Orb Style"), "combopoints.style", STYLE_ITEMS, R.comboPoints),
     Check(T("Hide When Empty"), "combopoints.hide_empty", R.comboPoints, {
-        tooltip = T("Hide the orbs and the gems at 0 points instead of showing them empty.") }),
+        tooltip = T("Hide the orbs at 0 points instead of showing them empty.") }),
 } })
 
 -- Position only: the dialog keeps its coordinate rows and the reset that re-attaches them to the player frame.
