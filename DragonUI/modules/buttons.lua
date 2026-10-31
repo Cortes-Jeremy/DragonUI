@@ -228,19 +228,37 @@ function addon.buttons_iterator()
     return advance
 end
 
+-- With the bar's art hidden its empty slots hide like the other bars', unless the game always shows them.
+function addon.MainSlotsFollowGrid()
+    local db = GetButtonsConfig()
+    return (db and db.hide_main_bar_background and GetCVar('alwaysShowActionBars') ~= '1') and true or false
+end
+
 function addon.RefreshButtonGrid()
     if not IsModuleEnabled() then return end
     if InCombatLockdown() then
         ButtonsModule.pendingRefresh = true
         return
     end
+    local follow = addon.MainSlotsFollowGrid()
     for slot = 1, NUM_ACTIONBAR_BUTTONS do
         local mainSlot = NumberedGlobal('ActionButton', slot)
-        if mainSlot then
+        if mainSlot and not follow then
             mainSlot:SetAttribute('showgrid', 1)
             ActionButton_ShowGrid(mainSlot)
+        elseif mainSlot then
+            -- Only the share a forced pass added goes, so a drag or the open spellbook keeps its own.
+            local count = mainSlot:GetAttribute('showgrid') or 0
+            if ButtonsModule.mainGridForced and count > 0 then
+                count = count - 1
+                mainSlot:SetAttribute('showgrid', count)
+            end
+            if count == 0 and not (mainSlot.action and HasAction(mainSlot.action)) then
+                mainSlot:Hide()
+            end
         end
     end
+    ButtonsModule.mainGridForced = not follow
 end
 
 local function HasPetSlotName(name)
@@ -654,6 +672,10 @@ function addon.GetButtonFrameColor()
     return frameColor[1], frameColor[2], frameColor[3], frameColor[4]
 end
 
+local function IsSlotFillHidden(db, isMainSlot)
+    return db.hide_slot_backgrounds or (not isMainSlot and db.only_actionbackground)
+end
+
 local function StyleActionSlot(slotButton, skipCombatGuard)
     if not IsModuleEnabled() then return end
     if not skipCombatGuard and InCombatLockdown() then return end
@@ -682,7 +704,13 @@ local function StyleActionSlot(slotButton, skipCombatGuard)
     if equipRing then DressLayer(equipRing, ATLAS_CHECKED, art) end
     SeatStateArt(slotButton, art, true)
 
-    slotButton.background = AddSlotBackdrop(slotButton, art, true)
+    local backdrop = AddSlotBackdrop(slotButton, art, true)
+    slotButton.background = backdrop
+    local db = GetButtonsConfig()
+    -- Hidden right away so the slot art never flashes for one frame before RefreshButtons.
+    if backdrop and db and IsSlotFillHidden(db, id and id:match('^ActionButton%d+$')) then
+        backdrop:Hide()
+    end
     slotButton._duiStyled = true
 end
 
@@ -724,7 +752,7 @@ local function StyleExtraSlot(slotButton)
     slotButton.background = backdrop
     local db = GetButtonsConfig()
     -- Hidden right away so the slot art never flashes for one frame before RefreshButtons.
-    if backdrop and db and db.only_actionbackground then
+    if backdrop and db and IsSlotFillHidden(db) then
         backdrop:Hide()
     end
 end
@@ -903,7 +931,7 @@ function addon.RefreshButtons()
                 local isMainActionButton = buttonName:match("^ActionButton%d+$")
 
                 -- show/hide action backgrounds
-                if db.only_actionbackground and not isMainActionButton then
+                if IsSlotFillHidden(db, isMainActionButton) then
                     button.background:Hide()
                 else
                     button.background:Show()
@@ -946,7 +974,7 @@ function addon.RefreshButtons()
         for index = 1, bar.count do
             local button = _G[bar.prefix .. index]
             if button and button.background then
-                if db.only_actionbackground then
+                if IsSlotFillHidden(db) then
                     button.background:Hide()
                 else
                     button.background:Show()
@@ -1140,7 +1168,7 @@ local function SetupHooks()
     hooksecurefunc('ActionButton_HideGrid', function(button)
         if not IsModuleEnabled() then return end
         if InCombatLockdown() then return end
-        if not button then return end
+        if not button or addon.MainSlotsFollowGrid() then return end
         local name = button:GetName()
         if name and name:match("^ActionButton%d+$") then
             button:SetAttribute('showgrid', 1)
@@ -1202,6 +1230,7 @@ local function Initialize()
             RefreshFrameTint()
             if IsModuleEnabled() then
                 addon.RefreshAllHotkeys()
+                addon.RefreshButtonGrid()
             end
         end
         addon.db.RegisterCallback(ButtonsModule, "OnProfileChanged", OnProfileChanged)
@@ -1217,7 +1246,6 @@ local function OnLoginGridPass()
         addon.RefreshButtonGrid()
         addon.RefreshButtons()
     end
-    collectgarbage()
 end
 addon.package:Subscribe(OnLoginGridPass, 'PLAYER_LOGIN')
 
@@ -1226,7 +1254,7 @@ local initFrame = CreateFrame("Frame")
 initFrame:RegisterEvent("ADDON_LOADED")
 initFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 initFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-initFrame:RegisterEvent("UPDATE_BINDINGS")  -- CLAVE: Actualizar hotkeys cuando cambien los bindings
+initFrame:RegisterEvent("UPDATE_BINDINGS")
 initFrame:SetScript("OnEvent", function(self, event, addonName)
     if event == "ADDON_LOADED" and addonName == "DragonUI" then
         Initialize()
@@ -1255,6 +1283,7 @@ end)
 hooksecurefunc("SetCVar", function(name, value)
     if name == "alwaysShowActionBars" then
         if not IsModuleEnabled() then return end
+        addon.RefreshButtonGrid()
         local mixin = addon.MainMenuBarMixin
         if mixin and mixin.update_main_bar_background then
             mixin:update_main_bar_background()

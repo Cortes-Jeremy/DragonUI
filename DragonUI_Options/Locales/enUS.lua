@@ -25,9 +25,9 @@ L["DragonUI"] = true
 L["Core"] = true
 L["Frames"] = true
 L["Interface"] = true
-L["Use the tabs on the left to configure modules, action bars, unit frames, minimap, and more."] = true
 L["Editor Mode"] = true
 L["Cannot open options during combat."] = true
+L["Options closed for combat."] = true
 L["Open DragonUI Settings"] = true
 L["Open the DragonUI configuration panel."] = true
 L["Use /dragonui to open the full settings panel."] = true
@@ -43,7 +43,7 @@ L["Heal prediction, absorb shields and animated health loss."] = true
 L["Change columns, rows, and buttons shown per action bar."] = true
 L["Switch micro menu icons between colored and grayscale style."] = true
 L["About"] = true
-L["Bringing the retail WoW look to 3.3.5a, inspired by Dragonflight UI."] = true
+L["Bringing the retail WoW look to 3.3.5a."] = true
 L["Created and maintained by NeticSoul, with community contributions."] = true
 
 -- Language
@@ -60,6 +60,14 @@ L["Automatically select greed or disenchant (when available) on green quality it
 -- Settings window
 L["Settings Window"] = true
 L["Size of this window on top of your UI scale; 1.0 matches the other panels. It never grows past the screen."] = true
+
+-- UI scale
+L["UI Scale"] = true
+L["Custom UI Scale"] = true
+L["Lets the interface go smaller than Blizzard's 0.64. Replaces the UI Scale in Video options."] = true
+L["Size of the whole interface. Lower values fit more on screen."] = true
+L["Auto Scale"] = true
+L["Use the scale that draws one interface pixel per screen pixel at your resolution."] = true
 
 L["Commands: /dragonui, /dui, /pi \226\128\148 /dragonui edit (editor) \226\128\148 /dragonui help"] = true
 L["GitHub (select and Ctrl+C to copy):"] = true
@@ -149,6 +157,8 @@ L["Extra scale applied on top of the minimap scale."] = true
 L["Enable DragonUI player castbar styling."] = true
 L["Enable DragonUI target castbar styling."] = true
 L["Enable DragonUI focus castbar styling."] = true
+L["Hide Blizzard's Castbar"] = true
+L["With this cast bar off, hide Blizzard's too, so none is shown."] = true
 L["Master toggle for the complete action bars system."] = true
 L["Includes main bars, vehicle, stance, pet, totem bars, and button styling."] = true
 L["Micro menu and bags styling."] = true
@@ -321,6 +331,11 @@ L["Fire abilities on key press instead of key release."] = true
 L["Enable Item Quality Borders"] = true
 L["Show quality-colored borders on items in bags, character panel, bank, merchant, and inspect frames."] = true
 L["Adds quality-colored glow borders to items in your bags, character panel, bank, merchant, and inspect frames: green = uncommon, blue = rare, purple = epic, orange = legendary."] = true
+L["Character Item Counts"] = true
+L["Show Character Item Counts"] = true
+L["Automatic Equipment Comparison"] = true
+L["Compare equippable items with your equipped gear without holding Shift, including item links opened from chat. Hold Ctrl to suppress it."] = true
+L["Shows how many of the hovered item each of your characters on this realm holds, split into bags, bank and equipped."] = true
 L["Minimum Quality"] = true
 L["Poor"] = true
 L["Common"] = true
@@ -332,13 +347,18 @@ L["Legendary"] = true
 -- Loot Window
 L["Loot Window"] = true
 L["Configure the DragonUI loot window."] = true
+L["Auto-Hide Empty Loot"] = true
+L["Close the loot window when there is nothing left to loot."] = true
 L["Enable Loot Window"] = true
 L["Apply the DragonUI skin to the Blizzard loot window."] = true
 L["Open at Cursor"] = true
 L["Open the loot window at the cursor instead of its saved position."] = true
 L["Disable Open at Cursor, then drag the loot window to save its position."] = true
+L["If auto loot is on, hold your auto loot key (Shift by default) while looting, then drag the window to save its position."] = true
 L["Animate Loot Reflow"] = true
 L["Smoothly close gaps and resize the loot window after collecting items."] = true
+L["Auto Loot Hold"] = true
+L["Seconds auto-looted items stay in the loot window before sliding out. Clicks pass through while they wait. 0 slides them out at once."] = true
 L["Reset Loot Window Position"] = true
 L["Clear the saved position. The Blizzard default will be used next time you open the loot window."] = true
 
@@ -356,6 +376,8 @@ L["Vertical position of the item level number on the icon."] = true
 L["Average Item Level"] = true
 L["Show the average item level of equipped gear on the character and inspect panels."] = true
 L["Durability on Character Slots"] = true
+L["Show Repair Cost"] = true
+L["Show the total repair cost of your equipped items in the character window."] = true
 L["Show each equipped item's durability percentage on its character panel slot, opposite the item level."] = true
 L["Show in Tooltip"] = true
 L["Also enable Blizzard's own item level line in item tooltips."] = true
@@ -399,8 +421,8 @@ L["Vertical offset from the cursor."] = true
 L["Show Aura Source"] = true
 L["Show the caster's name (class-colored) on buff and debuff tooltips."] = true
 L["Aura Tooltips"] = true
-L["Show Aura Spell ID"] = true
-L["Show the spell ID on buff and debuff tooltips. Requires the Tooltip module."] = true
+L["Show Spell IDs"] = true
+L["Show spell IDs on aura, spell and chat-link tooltips. Requires the Tooltip module."] = true
 
 -- Chat Mods
 L["Enable Chat Mods"] = true
@@ -449,6 +471,9 @@ L["Hover the coins in your bags to list the gold of every character that has log
 L["Show a tooltip with your other characters' gold when hovering the money in bags."] = true
 L["Show All Realms"] = true
 L["List characters from every realm instead of only the realm you are playing on."] = true
+L["Forget Character"] = true
+L["Delete the selected character's saved gold, item counts and offline bank. Your current character is never listed."] = true
+L["Forget all saved data of %s?"] = true
 
 -- Bag Sort
 L["Bag Sort"] = true
@@ -530,6 +555,20 @@ L["Item Count in Tooltip"] = true
 L["Show how many of the hovered item you own in total, across your bags and bank."] = true
 L["Quality Filter Row"] = true
 L["Show the rarity filter dots at the bottom of the bag frame."] = true
+L["New Items"] = true
+L["Highlight New Items"] = true
+L["Make items you just looted, bought, crafted or received glow in the inventory until you hover them."] = true
+L["Glow Style"] = true
+L["Border"] = true
+L["Starburst"] = true
+L["Glow Color"] = true
+L["Item Quality"] = true
+L["Custom"] = true
+L["Custom Glow Color"] = true
+L["Clear When Bags Close"] = true
+L["Closing a bag removes its new-item glows. When off, a glow only goes away when you hover the item."] = true
+L["Ignore Poor Quality Items"] = true
+L["Never mark gray (poor quality) items as new."] = true
 
 -- Advanced modules - Fallback display names
 L["Main Bars"] = true
@@ -581,8 +620,10 @@ L["Make the right secondary bar horizontal instead of vertical."] = true
 L["Button Appearance"] = true
 L["Main Bar Only Background"] = true
 L["Only the main action bar buttons will have a background."] = true
-L["Hide Main Bar Background"] = true
-L["Hide the background texture of the main action bar."] = true
+L["Hide Main Bar Art"] = true
+L["Hide Button Backgrounds"] = true
+L["Hide the slot background of every action bar button, leaving only the frames."] = true
+L["Hide the main bar's art and gryphons, leaving only the buttons."] = true
 L["Button Tooltips"] = true
 L["When to show tooltips on action, pet and stance buttons."] = true
 L["Always"] = true
@@ -617,7 +658,6 @@ L["Border Color"] = true
 -- Gryphons
 L["Gryphons"] = true
 L["End-cap ornaments flanking the main action bar."] = true
-L["Gryphon previews are hidden while D3D9Ex is active to avoid client crashes."] = true
 L["Style"] = true
 L["Gryphon Scale"] = true
 L["Gryphon Offset X"] = true
@@ -637,6 +677,8 @@ L["Bottom Right Bar Layout"] = true
 L["Right Bar Layout"] = true
 L["Left Bar Layout"] = true
 L["Configure the main action bar grid layout. Rows are determined automatically from columns and buttons shown."] = true
+L["Page by Form (Classless Servers)"] = true
+L["The main bar changes page with your stance or form, whatever your class. Only for classless servers."] = true
 L["Columns"] = true
 L["Buttons Shown"] = true
 L["Change Button Order"] = true
@@ -683,6 +725,9 @@ L["Fade the pet frame until you hover over it."] = true
 L["Fade the pet frame until you enter combat."] = true
 L["Fade party frames until you hover over them."] = true
 L["Fade party frames until you enter combat."] = true
+L["Buff Tooltip"] = true
+L["When to show the box of buffs and debuffs that opens as you hover a party member."] = true
+L["Hide the party frames at all times."] = true
 L["Fade boss frames until you hover over them."] = true
 L["Fade boss frames until you enter combat."] = true
 L["Boss"] = true
@@ -794,6 +839,28 @@ L["Latency Color"] = true
 L["Latency Alpha"] = true
 L["Opacity of the latency indicator."] = true
 
+-- Global cooldown indicator (player only)
+L["Global Cooldown"] = true
+L["Enable GCD Indicator"] = true
+L["Show a global cooldown readout above the player cast bar."] = true
+L["GCD Height"] = true
+L["Thickness of the GCD bar in pixels."] = true
+L["GCD Width"] = true
+L["Width of the GCD bar as a percentage of the cast bar."] = true
+L["GCD Color"] = true
+L["Always Show GCD Track"] = true
+L["Keep the empty GCD bar visible while no global cooldown is running."] = true
+L["Reset GCD Position"] = true
+L["GCD indicator reset to the cast bar."] = true
+L["GCD Style"] = true
+L["Fill texture of the GCD bar."] = true
+L["GCD Background"] = true
+L["What is drawn behind the GCD bar."] = true
+L["Show GCD Spark"] = true
+L["Show a spark on the moving edge of the GCD bar."] = true
+L["Flat"] = true
+L["Framed"] = true
+
 -- ============================================================================
 -- ENHANCEMENTS TAB
 -- ============================================================================
@@ -818,7 +885,7 @@ L["Reverse the order of micromenu buttons in the grid."] = true
 L["Hide on Vehicle"] = true
 L["Hide micromenu and bags while in a vehicle."] = true
 L["Show Latency Indicator"] = true
-L["Show a colored bar below the Help button indicating connection quality (green/yellow/red). Requires UI reload."] = true
+L["Show a colored bar below the Help button indicating connection quality (green/yellow/red)."] = true
 
 -- Bags
 L["Bags"] = true
@@ -841,6 +908,8 @@ L["Apply DragonUI border styling to addon icons."] = true
 L["Addon Button Fade"] = true
 L["Addon icons fade out when not hovered."] = true
 L["Player Arrow Size"] = true
+L["Addon Button Distance"] = true
+L["Moves LibDBIcon addon buttons out from the minimap's edge, or in with a negative value."] = true
 L["New Blip Style"] = true
 L["Use newer-style minimap blip icons."] = true
 L["Show Ping Sender"] = true
@@ -903,6 +972,8 @@ L["Reaction Color Health"] = true
 L["Colors the health bar by reaction: red = hostile, yellow = neutral, green = friendly, grey = tapped. Class color takes priority for players when enabled."] = true
 L["Class icon instead of 3D model for players."] = true
 L["Alternative Class Icons"] = true
+L["Race Portrait"] = true
+L["Race icon instead of 3D model for players."] = true
 L["No Portrait"] = true
 L["Hides the portrait: the frame closes where it was and the bars keep their place."] = true
 L["No Portrait (All Frames)"] = true
@@ -1166,8 +1237,8 @@ L["Enable Nameplates Module"] = true
 L["Apply DragonUI nameplate styling."] = true
 L["Plate Style"] = true
 L["Nameplate Art"] = true
-L["Heritage is the DragonUI art. Modern draws the current World of Warcraft nameplate chrome and is still in beta."] = true
-L["Modern (Beta)"] = true
+L["Heritage is the DragonUI art. Modern draws the current World of Warcraft nameplate chrome."] = true
+L["Modern"] = true
 L["Heritage"] = true
 L["Mouseover Highlight"] = true
 L["Wash the health bar with a bright overlay while the cursor is over the nameplate."] = true
@@ -1279,6 +1350,8 @@ L["Class Colors on Enemy Names"] = true
 
 L["Show Target Highlight"] = true
 L["Show Target Arrows"] = true
+L["Only Show Target Nameplate"] = true
+L["Show only your target's hostile nameplate. In combat, also show hostile NPCs attacking you. Friendly plates are never hidden by this."] = true
 L["Left/right arrows on the targeted nameplate."] = true
 L["Opacity"] = true
 L["Disable Non-Target Fade"] = true
@@ -1423,6 +1496,9 @@ L["Who draws quest icons on plates when Questie is loaded with its own nameplate
 L["Ask"] = true
 L["Pointer Mode"] = true
 L["Show a single quest marker on any objective mob instead of separate kill/loot icons."] = true
+L["Reset Learned Quest Loot"] = true
+L["Forget which mobs nameplates learned drop your quest items. They are learned again as you play."] = true
+L["Forget every quest item source that nameplates have learned?"] = true
 L["Kill Icon"] = true
 L["Choose the icon shown for kill objectives."] = true
 L["Sword"] = true
@@ -1707,3 +1783,9 @@ L["Accept Invites from Friends"] = true
 L["Automatically accept party invites from players on your friends list."] = true
 L["Accept Invites from Guild Members"] = true
 L["Automatically accept party invites from members of your guild."] = true
+L["Camera"] = true
+L["Max Camera Distance"] = true
+L["Let the camera zoom out further than the game's own slider allows."] = true
+L["Camera Distance"] = true
+L["Error Messages"] = true
+L["The red errors in the middle of the screen. Yellow quest updates always show."] = true

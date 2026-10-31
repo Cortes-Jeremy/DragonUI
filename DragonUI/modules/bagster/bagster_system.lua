@@ -103,7 +103,7 @@ local function ApplyBagsterSystem()
     mod.BagsterModule.originalStates.ToggleBag = _G.ToggleBag
     mod.BagsterModule.originalStates.ToggleKeyRing = _G.ToggleKeyRing
 
-    -- Hook bag functions
+    -- Replaced on purpose, not hooked: a post-hook would still open the stock bags as well.
     _G.OpenBackpack = AutoShowInventory
     if not mod.BagsterModule.hooks.closeBackpack then
         hooksecurefunc("CloseBackpack", AutoHideInventory)
@@ -184,15 +184,11 @@ local function ApplyBagsterSystem()
     BankFrame:UnregisterAllEvents()
     BankFrame:Hide()
 
-    -- The stock guild vault is load-on-demand; blanking its loader keeps it from ever existing
+    -- Blanking the loader keeps the stock vault unloaded; one loaded by another addon owns the bank.
     if mod.BagsterModule.originalStates.GuildBankFrame_LoadUI == nil then
         mod.BagsterModule.originalStates.GuildBankFrame_LoadUI = _G.GuildBankFrame_LoadUI
     end
     _G.GuildBankFrame_LoadUI = function() end
-    if _G.GuildBankFrame then
-        GuildBankFrame:UnregisterAllEvents()
-        GuildBankFrame:Hide()
-    end
 
     if not mod.BagsterModule.hooks.inventoryEvents then
         mod("InventoryEvents"):Register(mod, "BANK_OPENED", function()
@@ -243,6 +239,7 @@ local function ApplyBagsterSystem()
     SLASH_DRAGONUI_BAGSTER3 = "/combuctor" -- legacy alias for muscle memory
 
     mod.BagsterModule.applied = true
+    if mod.NewItems then mod.NewItems:Refresh() end
 end
 
 local function RestoreBagsterSystem()
@@ -297,9 +294,11 @@ local function RestoreBagsterSystem()
 
     mod.BagsterModule.originalStates = {}
     mod.BagsterModule.applied = false
+    if mod.NewItems then mod.NewItems:Refresh() end
 end
 
 local function RefreshBagsterFrames()
+    if mod.NewItems then mod.NewItems:Refresh() end
     if not mod.frames then return end
 
     for _, frame in pairs(mod.frames) do
@@ -379,6 +378,7 @@ local function OnProfileChanged()
                     end
                 end
             end
+            if mod.NewItems then mod.NewItems:Refresh() end
         end
     else
         if addon:ShouldDeferModuleDisable("bagster", mod.BagsterModule) then

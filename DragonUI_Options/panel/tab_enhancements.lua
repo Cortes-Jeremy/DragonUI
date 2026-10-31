@@ -48,23 +48,16 @@ local function BuildEnhancementsTab(scroll)
 
     C:AddDescription(darkSection, LO["Darkens UI borders and chrome only: action bar borders, unit frame borders, minimap border, bag slot borders, micro menu, castbar borders, and decorative elements. Icons, portraits, and abilities are never affected."])
 
-    C:AddToggle(darkSection, {
+    C:AddModuleToggle(darkSection, {
         label = LO["Enable Dark Mode"],
         desc = LO["Apply darker tinted textures to all UI elements."],
-        getFunc = function() return IsEnabled("darkmode") end,
-        setFunc = function(val)
-            EnsureModuleTable("darkmode").enabled = val
-            if val then
-                -- Force-push aura border tint on enable (clears Auras user override).
-                if addon.ApplyDarkMode then addon.ApplyDarkMode(true) end
-            else
-                -- Texture restore + reset aura buff border to default gray.
-                if addon.RestoreDarkMode then addon.RestoreDarkMode(true) end
-            end
-            -- Rebuild tab so the intensity dropdown updates its disabled state
-            Panel:SelectTab("enhancements")
+        moduleName = "darkmode",
+        -- Turning it on pushes the tint onto aura borders too, over a colour picked in Auras.
+        callback = function(val)
+            if val and addon.ApplyDarkMode then addon.ApplyDarkMode(true) end
         end,
-        requiresReload = true,
+        -- Rebuild tab so the intensity dropdown updates its disabled state
+        after = function() Panel:SelectTab("enhancements") end,
     })
 
     C:AddDropdown(darkSection, {
@@ -340,18 +333,6 @@ local function BuildEnhancementsTab(scroll)
     })
 
     C:AddToggle(ilvlSection, {
-        label = LO["Durability on Character Slots"],
-        desc = LO["Show each equipped item's durability percentage on its character panel slot, opposite the item level."],
-        getFunc = function() return GetModuleField("itemlevel", "show_durability") == true end,
-        setFunc = function(val)
-            EnsureModuleTable("itemlevel").show_durability = val
-            if addon.RefreshItemLevel then addon:RefreshItemLevel() end
-        end,
-        disabled = function() return not IsItemLevelEnabled() end,
-        requiresReload = false,
-    })
-
-    C:AddToggle(ilvlSection, {
         label = LO["Show in Tooltip"] or "Show in Tooltip",
         desc = LO["Also enable Blizzard's own item level line in item tooltips."]
             or "Also enable Blizzard's own item level line in item tooltips.",
@@ -396,6 +377,27 @@ local function BuildEnhancementsTab(scroll)
     end
 
     -- ====================================================================
+    -- CHARACTER ITEM COUNTS
+    -- ====================================================================
+    C:AddSpacer(scroll)
+    local ioSection = C:AddSection(scroll, LO["Character Item Counts"])
+
+    C:AddToggle(ioSection, {
+        label = LO["Show Character Item Counts"],
+        desc = LO["Shows how many of the hovered item each of your characters on this realm holds, split into bags, bank and equipped."],
+        getFunc = function() return IsEnabled("itemownership") end,
+        setFunc = function(val)
+            EnsureModuleTable("itemownership").enabled = val
+            if val then
+                if addon.ApplyItemOwnershipSystem then addon.ApplyItemOwnershipSystem() end
+            else
+                if addon.RestoreItemOwnershipSystem then addon.RestoreItemOwnershipSystem() end
+            end
+        end,
+        requiresReload = false,
+    })
+
+    -- ====================================================================
     -- UNIT FRAME LAYERS
     -- ====================================================================
     C:AddSpacer(scroll)
@@ -403,33 +405,17 @@ local function BuildEnhancementsTab(scroll)
 
     C:AddDescription(uflSection, LO["Heal prediction bars, absorb shields, and animated health loss overlays on unit frames."])
 
-    C:AddToggle(uflSection, {
+    C:AddModuleToggle(uflSection, {
         label = LO["Enable Unit Frame Layers"],
         desc = LO["Show heal prediction, absorb shields, and animated health loss on all unit frames."],
-        getFunc = function() return IsEnabled("unitframe_layers") end,
-        setFunc = function(val)
-            EnsureModuleTable("unitframe_layers").enabled = val
-        end,
-        callback = function()
-            Panel:SelectTab("enhancements")
-        end,
-        requiresReload = true,
+        moduleName = "unitframe_layers",
+        after = function() Panel:SelectTab("enhancements") end,
     })
 
     C:AddToggle(uflSection, {
         label = LO["Animated Health Loss"],
         desc = LO["Show animated red health loss bar on player frame when taking damage."],
-        getFunc = function()
-            local m = addon.db.profile.modules and addon.db.profile.modules.unitframe_layers
-            if not m then return true end
-            return m.animated_loss ~= false
-        end,
-        setFunc = function(val)
-            if not addon.db.profile.modules.unitframe_layers then
-                addon.db.profile.modules.unitframe_layers = {}
-            end
-            addon.db.profile.modules.unitframe_layers.animated_loss = val
-        end,
+        dbPath = "modules.unitframe_layers.animated_loss",
         disabled = function() return not IsEnabled("unitframe_layers") end,
         requiresReload = true,
     })
@@ -719,16 +705,12 @@ local function BuildEnhancementsTab(scroll)
 
     C:AddDescription(ttSection, LO["Improves GameTooltip with class-colored borders, class-colored names, target-of-target info, and styled health bars."])
 
-    C:AddToggle(ttSection, {
+    C:AddModuleToggle(ttSection, {
         label = LO["Enable Enhanced Tooltips"],
         desc = LO["Activate all tooltip improvements. Sub-options below control individual features."],
-        getFunc = function() return IsEnabled("tooltip") end,
-        setFunc = function(val)
-            EnsureModuleTable("tooltip").enabled = val
-            -- Rebuild tab so sub-toggles update their disabled state
-            Panel:SelectTab("enhancements")
-        end,
-            requiresReload = true,
+        moduleName = "tooltip",
+        -- Rebuild tab so sub-toggles update their disabled state
+        after = function() Panel:SelectTab("enhancements") end,
     })
 
     C:AddToggle(ttSection, {
@@ -844,6 +826,21 @@ local function BuildEnhancementsTab(scroll)
         requiresReload = false,
     })
 
+    C:AddToggle(ttSection, {
+        label = LO["Automatic Equipment Comparison"],
+        desc = LO["Compare equippable items with your equipped gear without holding Shift, including item links opened from chat. Hold Ctrl to suppress it."],
+        getFunc = function() return IsEnabled("equipmentcompare") end,
+        setFunc = function(val)
+            EnsureModuleTable("equipmentcompare").enabled = val
+        end,
+        callback = function()
+            if addon.RefreshEquipmentCompareSystem then
+                addon.RefreshEquipmentCompareSystem()
+            end
+        end,
+        requiresReload = false,
+    })
+
     -- ====================================================================
     -- MERCHANT AUTO SERVICES
     -- ====================================================================
@@ -927,6 +924,53 @@ local function BuildEnhancementsTab(scroll)
         dbPath = "autoaccept.guild",
         callback = RefreshAutoAcceptCaches,
         requiresReload = false,
+    })
+
+    -- ====================================================================
+    -- CAMERA
+    -- ====================================================================
+    C:AddSpacer(scroll)
+    local cameraSection = C:AddSection(scroll, LO["Camera"])
+
+    local function RefreshCamera()
+        if addon.RefreshCamera then addon.RefreshCamera() end
+    end
+
+    C:AddToggle(cameraSection, {
+        label = LO["Max Camera Distance"],
+        desc = LO["Let the camera zoom out further than the game's own slider allows."],
+        dbPath = "camera.max_distance",
+        callback = function()
+            RefreshCamera()
+            Panel:SelectTab("enhancements")
+        end,
+    })
+
+    C:AddSlider(cameraSection, {
+        label = LO["Camera Distance"],
+        dbPath = "camera.factor",
+        min = 1, max = 3.4, step = 0.1,
+        width = 200,
+        disabled = function() return not C:GetDBValue("camera.max_distance") end,
+        callback = RefreshCamera,
+    })
+
+    -- ====================================================================
+    -- ERROR MESSAGES
+    -- ====================================================================
+    C:AddSpacer(scroll)
+    local errorSection = C:AddSection(scroll, LO["Error Messages"])
+
+    C:AddDescription(errorSection, LO["The red errors in the middle of the screen. Yellow quest updates always show."])
+
+    C:AddVisibilityFadeToggles(errorSection, {
+        dbPrefix = "widgets.errorMessages",
+        alwaysHidden = true,
+        hideInCombat = true,
+        noHover = true,
+        callback = function()
+            if addon.VisibilityFade then addon.VisibilityFade.Update("errorMessages") end
+        end,
     })
 end
 

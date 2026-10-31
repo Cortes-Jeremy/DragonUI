@@ -87,6 +87,56 @@ function addon.GetCharacterMoney(name, realm)
     return entry and entry.copper or nil
 end
 
+local function AddKnownCharacter(list, realm, name)
+    if realm and name and name ~= "" and not (realm == playerRealm and name == playerName) then
+        list[realm .. "|" .. name] = name .. " - " .. realm
+    end
+end
+
+local function AddKnownFromFlatStore(list, store)
+    if type(store) ~= "table" then return end
+    for key in pairs(store) do
+        if type(key) == "string" then
+            AddKnownCharacter(list, string.match(key, "^(.-)|(.+)$"))
+        end
+    end
+end
+
+-- Gold and Bagster's bank are keyed "Realm|Name"; item counts nest realms[realm].characters[name].
+function addon.GetKnownCharacters()
+    local list = {}
+    local global = addon.db and addon.db.global
+    if not global then return list end
+    AddKnownFromFlatStore(list, global.characterMoney)
+    AddKnownFromFlatStore(list, global.bagsterCache)
+    local owned = global.itemOwnership
+    if type(owned) == "table" and type(owned.realms) == "table" then
+        for realm, realmData in pairs(owned.realms) do
+            if type(realmData) == "table" and type(realmData.characters) == "table" then
+                for name in pairs(realmData.characters) do
+                    AddKnownCharacter(list, realm, name)
+                end
+            end
+        end
+    end
+    return list
+end
+
+function addon.ForgetCharacter(realm, name)
+    if not realm or not name or (realm == playerRealm and name == playerName) then return false end
+    local global = addon.db and addon.db.global
+    if not global then return false end
+    local key = realm .. "|" .. name
+    if type(global.characterMoney) == "table" then global.characterMoney[key] = nil end
+    if type(global.bagsterCache) == "table" then global.bagsterCache[key] = nil end
+    local owned = global.itemOwnership
+    local realmData = type(owned) == "table" and type(owned.realms) == "table" and owned.realms[realm]
+    if type(realmData) == "table" and type(realmData.characters) == "table" then
+        realmData.characters[name] = nil
+    end
+    return true
+end
+
 -- ============================================================================
 -- TOOLTIP
 -- ============================================================================
@@ -97,8 +147,9 @@ local COPPER_SYMBOL = COPPER_AMOUNT_SYMBOL or "c"
 
 local function FormatMoney(copper)
     copper = copper or 0
-    -- GetCoinTextureString always embeds coin icons; it doesn't check colorblindMode itself.
-    if GetCoinTextureString and GetCVar("colorblindMode") ~= "1" then
+    -- GetCoinTextureString ignores colorblindMode and wraps amounts past 2^31 copper (int32).
+    if GetCoinTextureString and GetCVar("colorblindMode") ~= "1"
+        and math.abs(copper) < 2147483648 then
         return GetCoinTextureString(copper)
     end
     return format("|cffffd700%d%s|r |cffc7c7cf%d%s|r |cffeda55f%d%s|r",

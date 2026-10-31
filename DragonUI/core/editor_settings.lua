@@ -248,6 +248,9 @@ R.bars = function()
     local refresh = addon.RefreshMainbars or addon.RefreshMainbarsSystem
     if refresh then refresh() end
 end
+R.mainBarArt = function()
+    if addon.RefreshMainBarArt then addon.RefreshMainBarArt() end
+end
 R.extrabar = function()
     if addon.RefreshExtrabarFrame then addon.RefreshExtrabarFrame() end
 end
@@ -256,6 +259,9 @@ R.xprep = function()
 end
 R.micromenu = function()
     if addon.RefreshMicromenu then addon.RefreshMicromenu() end
+end
+R.microButtons = function()
+    if addon.RefreshMicromenuButtons then addon.RefreshMicromenuButtons() end
 end
 R.bags = function()
     if addon.RefreshBagsPosition then addon.RefreshBagsPosition() end
@@ -364,6 +370,9 @@ R.partyVisibility = function()
         for i = 1, 4 do fade.Update("party" .. i) end
     end
     R.partyText()
+end
+R.errorMessagesVisibility = function()
+    if addon.VisibilityFade then addon.VisibilityFade.Update("errorMessages") end
 end
 -- Same as the Options toggles: apply the bar, then push the flags to Blizzard's own action bar settings.
 R.barToggle = function()
@@ -610,13 +619,17 @@ local function VisibilityRows(field, refresh, o)
     if o.alwaysHidden then
         rows[#rows + 1] = Check(T("Always Hidden"), field("always_hidden"), refresh)
     end
-    rows[#rows + 1] = Check(T("Show on Hover Only"), field("show_on_hover"), refresh)
+    if not o.noHover then
+        rows[#rows + 1] = Check(T("Show on Hover Only"), field("show_on_hover"), refresh)
+    end
     rows[#rows + 1] = CombatSwitch(T("Show in Combat Only"), field, "show_in_combat", "hide_in_combat", refresh)
     if o.hideInCombat then
         rows[#rows + 1] = CombatSwitch(T("Hide in Combat"), field, "hide_in_combat", "show_in_combat", refresh)
     end
-    rows[#rows + 1] = Drop(T("Hover/Combat Logic"), field("visibility_logic"), LOGIC_ITEMS, refresh, {
-        get = function() return GetDB(field("visibility_logic")) == "or" and "or" or "and" end })
+    if not o.noHover then
+        rows[#rows + 1] = Drop(T("Hover/Combat Logic"), field("visibility_logic"), LOGIC_ITEMS, refresh, {
+            get = function() return GetDB(field("visibility_logic")) == "or" and "or" or "and" end })
+    end
     return rows
 end
 
@@ -793,122 +806,54 @@ function E.Get(first, second)
 end
 
 -- ============================================================================
--- RELOAD-REQUIRED SETTINGS (Options may not be loaded, so the popup lives here)
+-- RELOAD-ONLY SETTINGS (staged in addon.Reload, saved only by its "Reload Now")
 -- ============================================================================
 
-local RELOAD_POPUP = "DRAGONUI_EDITOR_SETTING_RELOAD"
-local RELOAD_DEBOUNCE = 0.5
-local lastReloadPrompt
-local sessionValues = {}
-local pendingRevert = {}
-
--- Raw saved values taken at login; a setting is "pending" while it differs from what this session loaded.
-local RELOAD_PATHS = {
-    "micromenu.grayscale_icons",
-    "micromenu.show_latency_indicator",
-    "xprepbar.style",
-    "style.xpbar",
-    "buttons.hide_main_bar_background",
-    "modules.bagster.enabled",
-}
-
-local function RevertPending()
-    for path in pairs(pendingRevert) do
-        local loaded = sessionValues[path]
-        if loaded ~= nil then SetDB(path, loaded) end
-        pendingRevert[path] = nil
-    end
-    E.Rebuild()
-end
-
-local function BuildReloadPopup()
-    return {
-        text = Label("Changing this setting requires a UI reload to apply correctly."),
-        button1 = Label("Reload Now"),
-        button2 = Label("Later"),
-        OnAccept = function() ReloadUI() end,
-        OnCancel = function() RevertPending() end,
-        timeout = 0,
-        whileDead = true,
-        hideOnEscape = true,
-        preferredIndex = 3,
-    }
-end
-
-if StaticPopupDialogs then
-    StaticPopupDialogs[RELOAD_POPUP] = BuildReloadPopup()
-end
-
--- `revertPaths` are restored if the user answers "Later" (what Options does for the XP bar style).
-function E.PromptReload(revertPaths)
-    if type(revertPaths) == "table" then
-        for i = 1, #revertPaths do pendingRevert[revertPaths[i]] = true end
-    end
-    if not (StaticPopup_Show and StaticPopupDialogs and StaticPopupDialogs[RELOAD_POPUP]) then return end
-    if StaticPopup_Visible and StaticPopup_Visible(RELOAD_POPUP) then return end
-
-    local now = GetTime and GetTime() or 0
-    if lastReloadPrompt and now - lastReloadPrompt < RELOAD_DEBOUNCE then return end
-    lastReloadPrompt = now
-    StaticPopup_Show(RELOAD_POPUP)
-end
-
-local function DismissReloadPrompt()
-    for path in pairs(pendingRevert) do pendingRevert[path] = nil end
-    if StaticPopup_Hide then StaticPopup_Hide(RELOAD_POPUP) end
-end
-
-local function CaptureSessionValue(path)
-    local value = GetDB(path)
-    if value == nil then value = false end
-    sessionValues[path] = value
-end
-
--- True while the saved value differs from the one this session was loaded with.
+-- True while a change to this setting waits for a reload; its dependent rows stay frozen until then.
 function E.IsReloadPending(path)
-    local loaded = sessionValues[path]
-    if loaded == nil then return false end
-    local current = GetDB(path)
-    if current == nil then current = false end
-    return current ~= loaded
+    return addon.Reload.IsStaged(path)
 end
 
-local function AnyReloadPending()
-    for path in pairs(sessionValues) do
-        if E.IsReloadPending(path) then return true end
-    end
-    return false
-end
-
+-- `extraPaths` mirror the value and are staged only while the main one is.
 local function ReloadSet(path, o)
     return function(value)
-        SetDB(path, value)
-        local paths = { path }
+        addon.Reload.Stage(path, value)
         if o.extraPaths then
+            local staged = addon.Reload.IsStaged(path)
             for i = 1, #o.extraPaths do
-                SetDB(o.extraPaths[i], value)
-                paths[#paths + 1] = o.extraPaths[i]
+                local extra = o.extraPaths[i]
+                addon.Reload.Stage(extra, staged and value or GetDB(extra))
             end
-        end
-        if E.IsReloadPending(path) then
-            E.PromptReload(o.revert and paths or nil)
-        elseif not AnyReloadPending() then
-            DismissReloadPrompt()
         end
         E.Rebuild()
     end
 end
 
--- Same as Options: the value is saved now, applied after a reload, and the dependent rows stay frozen until then.
 local function ReloadCheck(labelKey, path, o)
     o = o or {}
     return Check(labelKey, path, nil, { set = ReloadSet(path, o), hidden = o.hidden, disabled = o.disabled,
-        tooltip = o.tooltip })
+        tooltip = o.tooltip, get = function() return addon.Reload.Get(path) and true or false end })
 end
 
 local function ReloadDrop(labelKey, path, list, o)
     o = o or {}
-    return Drop(labelKey, path, list, nil, { set = ReloadSet(path, o), hidden = o.hidden, disabled = o.disabled })
+    return Drop(labelKey, path, list, nil, { set = ReloadSet(path, o), hidden = o.hidden, disabled = o.disabled,
+        get = function() return addon.Reload.Get(path) end })
+end
+
+-- Same rule as the Options toggle: live when the module can switch now, staged for a reload otherwise.
+local function ModuleCheck(labelKey, name, o)
+    o = o or {}
+    return Check(labelKey, "modules." .. name .. ".enabled", nil, {
+        hidden = o.hidden,
+        disabled = o.disabled,
+        tooltip = o.tooltip,
+        get = function() return addon.Reload.ModuleState(name) end,
+        set = function(value)
+            E.Flush()
+            if addon:SetModuleEnabled(name, value) and o.onLive then o.onLive(value) end
+            E.Rebuild()
+        end })
 end
 
 local function Append(frameName, ...)
@@ -989,12 +934,22 @@ local function PortraitRows(key, refresh)
         Check(T("Class Portrait"), base .. ".classPortrait", refresh, {
             set = function(value)
                 SetDB(base .. ".classPortrait", value)
-                if value then SetDB(base .. ".alternativeClassIcons", true) end
+                if value then
+                    SetDB(base .. ".alternativeClassIcons", true)
+                    SetDB(base .. ".racePortrait", false)
+                end
                 Immediate(refresh)
                 E.Rebuild()
             end }),
         Check(T("Alternative Class Icons"), base .. ".alternativeClassIcons", refresh, {
             disabled = function() return not GetDB(base .. ".classPortrait") end }),
+        Check(T("Race Portrait"), base .. ".racePortrait", refresh, {
+            set = function(value)
+                SetDB(base .. ".racePortrait", value)
+                if value then SetDB(base .. ".classPortrait", false) end
+                Immediate(refresh)
+                E.Rebuild()
+            end }),
     }
 end
 
@@ -1142,13 +1097,16 @@ E.Register("party", { settings = Join({
     Section(T("Appearance"), true),
     Check(T("Class Color Health"), "unitframe.party.classcolor", R.partyText),
     Drop(T("PvP Icon Style"), "unitframe.party.pvp_icon_style", PVP_STYLES, R.partyText),
+    PortraitRows("party", R.partyText),
     Section(T("Text Display"), true, nil, PreviewTexts("party")),
     TextRows("party", R.partyText),
 }) })
 
-E.Register("boss", { settings = {
+E.Register("boss", { settings = Join({
     Slider(T("Scale"), "unitframe.boss.scale", 0.5, 2.0, 0.01, R.boss, { resize = true }),
-} })
+    Section(T("Text Display"), true, nil, PreviewTexts("boss")),
+    TextRows("boss", R.boss),
+}) })
 
 -- ============================================================================
 -- DEFINITIONS: CAST BARS
@@ -1194,6 +1152,73 @@ end
 E.Register("PlayerCastbar", CastbarSettings("castbar", R.castbarPlayer, 80, 512, 10, 64, true))
 E.Register("TargetCastbar", CastbarSettings("castbar.target", R.castbarTarget, 50, 400, 5, 50))
 E.Register("FocusCastbar", CastbarSettings("castbar.focus", R.castbarFocus, 50, 400, 5, 50))
+
+-- ============================================================================
+-- DEFINITIONS: GLOBAL COOLDOWN INDICATOR
+-- ============================================================================
+
+R.gcd = function()
+    if addon.RefreshGCD then addon.RefreshGCD() end
+    RefreshCastbarPreview("GCDIndicator")
+end
+
+local GCD_STYLE_ITEMS = {
+    { "castbar", T("Cast Bar") },
+    { "smooth", T("Smooth") },
+    { "classic", T("Classic") },
+    { "flat", T("Flat") },
+}
+
+local GCD_BACKGROUND_ITEMS = {
+    { "castbar", T("Cast Bar") },
+    { "dark", T("Dark") },
+    { "framed", T("Framed") },
+    { "none", T("None") },
+}
+
+local function GCDSettings()
+    local refresh = R.gcd
+    local function GCDOff() return not GetDB("castbar.gcd.enabled") end
+
+    return { settings = Join({
+        Section(T("Global Cooldown"), false),
+        Check(T("Enable GCD Indicator"), "castbar.gcd.enabled", refresh, {
+            after = function() E.SyncFrames(); E.Rebuild() end }),
+        Slider(T("GCD Height"), "castbar.gcd.height", 1, 12, 1, refresh, {
+            resize = true, disabled = GCDOff }),
+        -- The width is stored as a fraction of the cast bar, the slider works in percent.
+        Slider(T("GCD Width"), "castbar.gcd.width", 10, 100, 5, refresh, {
+            resize = true, disabled = GCDOff, format = "%.0f%%",
+            get = function() return (GetNumber("castbar.gcd.width", 1) or 1) * 100 end,
+            set = function(value)
+                SetDB("castbar.gcd.width", value / 100)
+                Deferred(refresh)
+            end,
+        }),
+        ColorRow(T("GCD Color"), {
+            disabled = function()
+                local style = GetDB("castbar.gcd.style")
+                return GCDOff() or style == nil or style == "castbar"
+            end,
+            get = function()
+                local color = GetDB("castbar.gcd.color")
+                if type(color) ~= "table" then return { 1, 0.7, 0, 1 } end
+                return { color.r or 1, color.g or 0.7, color.b or 0, color.a or 1 }
+            end,
+            set = function(r, g, b, a)
+                SetDB("castbar.gcd.color", { r = r, g = g, b = b, a = a or 1 })
+                Deferred(refresh)
+            end,
+        }),
+        Check(T("Always Show GCD Track"), "castbar.gcd.alwaysShow", refresh, { disabled = GCDOff }),
+        Drop(T("GCD Style"), "castbar.gcd.style", GCD_STYLE_ITEMS, refresh, {
+            disabled = GCDOff, after = function() E.Rebuild() end }),
+        Drop(T("GCD Background"), "castbar.gcd.background", GCD_BACKGROUND_ITEMS, refresh, { disabled = GCDOff }),
+        Check(T("Show GCD Spark"), "castbar.gcd.spark", refresh, { disabled = GCDOff }),
+    }) }
+end
+
+E.Register("GCDIndicator", GCDSettings())
 
 -- ============================================================================
 -- DEFINITIONS: ACTION BARS, XP/REP, MICRO MENU, BAGS
@@ -1305,7 +1330,7 @@ local function XpRepSettings(scaleLabel, scalePath, isExperience)
         ReloadDrop(T("XP / Rep Bar Style"), "xprepbar.style", {
             { "dragonflightui", T("DragonflightUI") },
             { "retailui", T("RetailUI") },
-        }, { extraPaths = { "style.xpbar" }, revert = true }),
+        }, { extraPaths = { "style.xpbar" } }),
     }) }
 end
 
@@ -1357,12 +1382,12 @@ E.Register("micromenu", { settings = {
         end }),
     Check(T("Hide on Vehicle"), "micromenu.hide_on_vehicle", R.microVehicle),
     Section(T("Latency Indicator"), true),
-    ReloadCheck(T("Show Latency Indicator"), "micromenu.show_latency_indicator"),
+    Check(T("Show Latency Indicator"), "micromenu.show_latency_indicator", R.microButtons),
 } })
 
 E.Register("bagsbar", { compact = true, settings = {
     Slider(T("Scale"), "bags.scale", 0.5, 2.0, 0.01, R.bags),
-    ReloadCheck(T("Enable Bagster"), "modules.bagster.enabled", {
+    ModuleCheck(T("Enable Bagster"), "bagster", {
         tooltip = T("All-in-one bag replacement with filtering and search") }),
 } })
 
@@ -1531,6 +1556,7 @@ E.Register("minimap", { settings = {
         end }),
     Check(T("New Blip Style"), "minimap.blip_skin", R.minimap),
     Slider(T("Player Arrow Size"), "minimap.player_arrow_size", 8, 50, 1, R.minimap),
+    Slider(T("Addon Button Distance"), "minimap.addon_button_distance", -10, 20, 1, R.minimap),
     Section(T("Time & Calendar"), true),
     Check(T("Show Clock"), "minimap.clock", R.minimap),
     Slider(T("Clock Font Size"), "minimap.clock_font_size", 8, 20, 1, R.minimap),
@@ -1616,7 +1642,7 @@ local function TooltipOff()
 end
 
 local function SpellIdRow()
-    return Check(T("Show Aura Spell ID"), "modules.tooltip.show_aura_spell_id", nil, {
+    return Check(T("Show Spell IDs"), "modules.tooltip.show_aura_spell_id", nil, {
         get = function() return GetDB("modules.tooltip.show_aura_spell_id") == true end,
         disabled = TooltipOff })
 end
@@ -1786,6 +1812,7 @@ E.Register("combopoints", { settings = {
 
 -- Position only: the dialog keeps its coordinate rows and the reset that re-attaches them to the player frame.
 E.Register("dkrunes", { settings = {} })
+E.Register("totemframe", { settings = {} })
 
 -- Forever's swing timer rows, ranges at our HUD's 0.72 (see swingtimer.lua), one dialog per bar.
 local function SwingTimerSettings(hand)
@@ -1886,21 +1913,11 @@ end
 
 E.Register("__manager", { settings = {
     Section(T("Dark Mode"), true, NoDarkMode),
-    Check(T("Enable Dark Mode"), "modules.darkmode.enabled", nil, {
+    ModuleCheck(T("Enable Dark Mode"), "darkmode", {
         hidden = NoDarkMode,
-        get = function() return ModuleField("darkmode", "enabled") == true end,
-        set = function(value)
-            E.Flush()
-            SetDB("modules.darkmode.enabled", value)
-            RunNow(function()
-                if value then
-                    if addon.ApplyDarkMode then addon.ApplyDarkMode(true) end
-                elseif addon.RestoreDarkMode then
-                    addon.RestoreDarkMode(true)
-                end
-            end, "darkmode_toggle")
-            E.PromptReload()
-            E.Rebuild()
+        -- Turning it on pushes the tint onto aura borders too, as the Options toggle does.
+        onLive = function(value)
+            if value and addon.ApplyDarkMode then addon.ApplyDarkMode(true) end
         end }),
     Drop(T("Intensity"), "modules.darkmode.intensity_preset", {
         { 1, T("Light (subtle)") },
@@ -1933,6 +1950,9 @@ E.Register("__manager", { settings = {
     Check(T("Swing Timer"), "modules.swingtimer.enabled", R.swingTimerToggle, {
         tooltip = T("Show a bar with the time left until each weapon's next swing."),
         after = function() E.SyncFrames(); E.Rebuild() end }),
+    Check(T("GCDAnchor"), "castbar.gcd.enabled", R.gcd, {
+        tooltip = T("Show a bar above the player cast bar that fills while the global cooldown runs."),
+        after = function() E.SyncFrames(); E.Rebuild() end }),
 
     Section(T("Action Bars"), true),
     Check(T("Bottom Left Bar"), "actionbars.bottom_left_enabled", R.barToggle),
@@ -1952,8 +1972,13 @@ E.Register("__manager", { settings = {
         after = function() E.SyncFrames(); E.Rebuild() end }),
 
     Section(T("Button Appearance"), true, NoButtons),
-    Check(T("Main Bar Only Background"), "buttons.only_actionbackground", R.buttons, { hidden = NoButtons }),
-    ReloadCheck(T("Hide Main Bar Background"), "buttons.hide_main_bar_background", { hidden = NoButtons }),
+    Check(T("Hide Main Bar Art"), "buttons.hide_main_bar_background", R.mainBarArt, { hidden = NoButtons }),
+    Check(T("Hide Button Backgrounds"), "buttons.hide_slot_backgrounds", R.buttons, {
+        hidden = NoButtons,
+        after = function() E.Rebuild() end }),
+    Check(T("Main Bar Only Background"), "buttons.only_actionbackground", R.buttons, {
+        hidden = NoButtons,
+        disabled = function() return GetDB("buttons.hide_slot_backgrounds") end }),
     Drop(T("Button Tooltips"), "buttons.tooltips", {
         { "always", T("Always") },
         { "combat", T("Hide in Combat") },
@@ -2010,13 +2035,17 @@ Fades("player", Dotted("unitframe.player"), R.player)
 Fades("target", Dotted("unitframe.target"), R.target)
 Fades("focus", Dotted("unitframe.focus"), R.focus)
 Fades("PetFrame", Dotted("unitframe.pet"), R.pet)
-Fades("party", Dotted("unitframe.party"), R.partyVisibility)
+Fades("party", Dotted("unitframe.party"), R.partyVisibility, { alwaysHidden = true })
 Fades("boss", Dotted("unitframe.boss"), R.boss)
+-- The error frame never takes the mouse, so hover rows would do nothing.
+E.Register("errorMessages", { compact = true, settings = {} })
+Fades("errorMessages", Dotted("widgets.errorMessages"), R.errorMessagesVisibility,
+    { alwaysHidden = true, hideInCombat = true, noHover = true })
 
 -- Dialogs with few settings and no wide dropdowns shrink to the width of their coordinate rows.
 for _, frameName in ipairs({
     "boss", "bagsbar", "stance", "totembar", "xpbar", "repbar", "tooltip", "questtracker",
-    "weapon_enchants", "tot", "fot", "petbar", "combopoints", "dkrunes",
+    "weapon_enchants", "tot", "fot", "petbar", "combopoints", "dkrunes", "totemframe",
 }) do
     local def = E.Get(frameName)
     if def then def.compact = true end
@@ -2036,10 +2065,6 @@ function E.RefreshLabels()
                 end
             end
         end
-    end
-
-    if StaticPopupDialogs and StaticPopupDialogs[RELOAD_POPUP] then
-        StaticPopupDialogs[RELOAD_POPUP] = BuildReloadPopup()
     end
 end
 
@@ -2066,7 +2091,8 @@ lifecycle:SetScript("OnEvent", function(_, event)
     end
 
     E.RefreshLabels()
-    for i = 1, #RELOAD_PATHS do CaptureSessionValue(RELOAD_PATHS[i]) end
+    -- A dropped reload-only change unfreezes the rows it froze and shows its saved value again.
+    addon.Reload.OnDiscard(E.Rebuild)
 
     if type(addon.HideAllEditableFrames) == "function" then
         hooksecurefunc(addon, "HideAllEditableFrames", function() E.OnEditorClose() end)

@@ -22,11 +22,14 @@ local defaults = {
         talentBuilds = {}, -- Saved talent builds per class: [CLASS] = { {name, ranks[tab][index], reqLevel}, ... }
         auraDurations = {}, -- Observed debuff durations for nameplates: [spellId] = seconds
         addonIcons = {}, -- Addon manager icons learned from loaded addons: [lowercase folder] = { icon, coords }
-        optionsPanelScale = 1 -- Settings window scale on top of the UI scale
+        itemOwnership = { version = 1, realms = {} }, -- Per-realm, per-character item counts for the tooltip module
+        uiScaleEnabled = false, -- DragonUI sets UIParent's scale itself, which can go below Blizzard's 0.64
+        uiScale = false -- That scale; false until first enabled, then seeded from the scale on screen
     },
     profile = {
         -- Keep at 1: version-less legacy profiles read this default and must still run migrations.
         version = 1,
+        optionsPanelScale = 1, -- Settings window scale on top of the UI scale
         -- Widgets
         widgets = {
             minimap = {
@@ -86,6 +89,9 @@ local defaults = {
                 anchor = "BOTTOM",
                 posX = 0,
                 posY = 200
+            },
+            gcd = {
+                custom_position = false -- sits on the player cast bar until dragged off
             },
             targetCastbar = {
                 anchor = "CENTER",
@@ -181,7 +187,10 @@ local defaults = {
                 anchor = "CENTER",
                 posX = 0,
                 posY = 160,
-                custom_position = false
+                custom_position = false,
+                always_hidden = false,
+                show_in_combat = false,
+                hide_in_combat = false,
             },
             positionPresetPanel = {
                 anchor = "TOP",
@@ -304,6 +313,10 @@ local defaults = {
             friends = false, -- Accept party invites from players on the friends list
             guild = false, -- Accept party invites from guild members
         },
+        camera = {
+            max_distance = false, -- Override cameraDistanceMaxFactor past the 2.0 the Interface slider allows
+            factor = 3.4, -- Factor applied while max_distance is on
+        },
         -- ACTIONBAR SETTINGS
         mainbars = {
             -- Per-bar layout (nested sub-tables with rows/columns/buttons_shown)
@@ -360,7 +373,9 @@ local defaults = {
             scale_leftbar = 0.9,
             scale_bottomleft = 0.9,
             scale_bottomright = 0.9,
-            scale_vehicle = 1
+            scale_vehicle = 1,
+
+            page_by_form = false, -- Main bar pages by the stance bar's form names, for classless servers
         },
 
         -- ACTION BAR VISIBILITY SETTINGS
@@ -461,6 +476,12 @@ local defaults = {
             x_position = 1,
             y_position = 41,
             tint_unusable = true, -- Red icon tint for gear/Use items the player cannot use
+            new_items = true, -- Glow on items the character just gained (inventory bags; Bagster or bags_skin)
+            new_glow_style = "border", -- "border" (soft pulsing ring) or "starburst" (rotating star)
+            new_glow_color_mode = "quality", -- "quality" (item rarity colour) or "user" (new_glow_color)
+            new_glow_color = { 1, 1, 1, 1 }, -- Glow colour when new_glow_color_mode is "user"
+            new_clear_on_close = true, -- Closing a bag clears its glows (Bagster: closing the inventory clears all)
+            new_ignore_junk = false, -- Never mark poor-quality items as new
         },
 
         xprepbar = {
@@ -495,13 +516,10 @@ local defaults = {
             exhaustion_tick = true -- Show exhaustion tick (on by default)
         },
 
-        compatibility = {
-            d3d9ex_warning_seen = false,
-        },
-
         buttons = {
             only_actionbackground = true,
             hide_main_bar_background = false,
+            hide_slot_backgrounds = false, -- Every button shows only its frame, whatever only_actionbackground says
             tooltips = "always", -- "always", "combat" (hidden in combat) or "never"
             count = {
                 show = true
@@ -607,9 +625,10 @@ local defaults = {
             zonetext_font_size = 12,
             settings_button_angle = 203,
             farm_mode_enabled = false, -- Bigger map, chrome hidden; toggled by /dui farm or the panel
-            farm_mode_scale = 1.5, -- Extra scale on top of minimap.scale (clamped to 1-2)
+            farm_mode_scale = 1.5, -- Extra scale on top of minimap.scale at UI scale 0.8 (clamped to 1-2)
             collector_enabled = true,
             collector_style = "dragonui",
+            addon_button_distance = 0, -- Map units LibDBIcon addon buttons move out (+) or in (-) from their usual orbit
             animated_border_enabled = false,
             animated_border_scale = 0.9,
             animated_border_preset = "drg_preset_01",
@@ -652,6 +671,7 @@ local defaults = {
         -- CASTBAR SETTINGS
         castbar = {
             enabled = true,
+            hideBlizzard = false, -- with the DragonUI bar off, hide Blizzard's too
             scale = 1,
             text_mode = "simple",
             precision_time = 1,
@@ -673,9 +693,22 @@ local defaults = {
                 alpha = 0.45,
             },
 
+            -- GLOBAL COOLDOWN INDICATOR (PLAYER ONLY)
+            gcd = {
+                enabled = false,
+                height = 4,           -- bar thickness in pixels
+                width = 1,            -- width as a fraction of the cast bar (0.1 - 1)
+                alwaysShow = false,   -- keep the empty track visible while the GCD is idle
+                style = "castbar",    -- fill: "castbar", "classic", "flat" or "smooth"
+                background = "castbar", -- track: "castbar", "dark", "framed" or "none"
+                spark = false,        -- spark on the moving edge of the fill
+                color = { r = 1, g = 0.7, b = 0 },
+            },
+
             -- TARGET CASTBAR SETTINGS
             target = {
                 enabled = true,
+                hideBlizzard = false,
                 override = false,
                 scale = 1,
                 x_position = 0,
@@ -699,6 +732,7 @@ local defaults = {
             -- FOCUS CASTBAR SETTINGS
             focus = {
                 enabled = true,
+                hideBlizzard = false,
                 override = false,
                 scale = 1,
                 x_position = 0,
@@ -733,6 +767,7 @@ local defaults = {
                 scale = 1.0,
                 classcolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
+                racePortrait = false, -- Show race icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
                 portrait_off = false, -- Portrait-off frame: the portrait art without its ring (uf_compact.lua)
                 textFormat = "both",
@@ -771,6 +806,7 @@ local defaults = {
                 classcolor = false,
                 reactioncolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
+                racePortrait = false, -- Show race icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
                 portrait_off = false, -- Portrait-off frame: the portrait art without its ring (uf_compact.lua)
                 breakUpLargeNumbers = true,
@@ -793,6 +829,7 @@ local defaults = {
                 classcolor = false,
                 reactioncolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
+                racePortrait = false, -- Show race icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
                 portrait_off = false, -- Portrait-off frame: the portrait art without its ring (uf_compact.lua)
                 breakUpLargeNumbers = true,
@@ -826,6 +863,9 @@ local defaults = {
             party = {
                 enabled = true,
                 classcolor = false,
+                classPortrait = false, -- Show class icon instead of character portrait
+                racePortrait = false, -- Show race icon instead of character portrait
+                alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
                 breakUpLargeNumbers = true,
                 textFormat = 'both',
                 showHealthTextAlways = false,
@@ -840,6 +880,8 @@ local defaults = {
                 anchorParent = 'TOPLEFT',
                 x = 10,
                 y = -200,
+                buff_tooltip = "always", -- "always" | "combat" (hidden in combat) | "never": Blizzard's buff box on hover
+                always_hidden = false,
                 show_on_hover = false,
                 show_in_combat = false,
                 visibility_logic = "and",
@@ -848,6 +890,7 @@ local defaults = {
                 classcolor = false,
                 reactioncolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
+                racePortrait = false, -- Show race icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
                 portrait_off = false, -- Portrait-off frame: the portrait art without its ring (uf_compact.lua)
                 scale = 1.0,
@@ -862,6 +905,7 @@ local defaults = {
                 classcolor = false,
                 reactioncolor = false,
                 classPortrait = false, -- Show class icon instead of character portrait
+                racePortrait = false, -- Show race icon instead of character portrait
                 alternativeClassIcons = false, -- Use DragonUI alternative class icons for class portraits
                 portrait_off = false, -- Portrait-off frame: the portrait art without its ring (uf_compact.lua)
                 scale = 1.0,
@@ -875,6 +919,10 @@ local defaults = {
             boss = {
                 enabled = true,
                 scale = 1.0,
+                breakUpLargeNumbers = true,
+                textFormat = "both",
+                showHealthTextAlways = false,
+                showManaTextAlways = false,
                 override = false,
                 anchor = 'TOPRIGHT',
                 anchorParent = 'TOPRIGHT',
@@ -1013,6 +1061,9 @@ local defaults = {
             combopoints = {
                 enabled = true, -- Retail orb bar under the player and/or small orbs on the target (Options > Unit Frames)
             },
+            totemframe = {
+                enabled = true, -- Round totem timers under the player: HD ring, editor spot (shamans)
+            },
             swingtimer = {
                 enabled = false, -- Main hand, off hand and ranged swing bars (settings in editor mode)
             },
@@ -1024,8 +1075,8 @@ local defaults = {
             },
             nameplates = {
                 enabled = true,
-                barWidth = 150, -- ~Blizzard plate width
-                barHeight = 9, -- height of the nameplate in pixels
+                barWidth = 148, -- Modern's baked art is cut for 148x16; Heritage seeds 150x9 when picked
+                barHeight = 16, -- height of the nameplate in pixels
                 fontSize = 2, -- Scale 1-10, maps to name/HP font px
                 nameFont = "primary", -- font for name/level text (primary, actionbar, narrow, arial, system)
                 healthTextFormat = "percent", -- "none" | "percent" | "value" | "valuePercent" (value then percent)
@@ -1050,13 +1101,13 @@ local defaults = {
                 showPartyRaidCastBars = true, -- show cast bars on party/raid member nameplates
                 castBarModernIconBorder = true, -- action-bar style frame around the cast icon
                 castBarModernIconLeft = false, -- Modern style: spell icon left of the cast bar instead of under it
-                castBarHeight = 9, -- height of the cast bar in pixels
+                castBarHeight = 8, -- height of the cast bar in pixels
                 castBarGap = 3, -- vertical gap between health, power, and cast bars
-                showCastBarSpellName = false, -- show the spell name text on the cast bar (the modern skin turns it on)
-                castBarSpellNameFontSize = 9, -- font size for the cast bar spell name text
+                showCastBarSpellName = true, -- show the spell name text on the cast bar (the modern skin is drawn around it)
+                castBarSpellNameFontSize = 8, -- font size for the cast bar spell name text
                 castBarSpellNameOffsetX = 0, -- horizontal offset for the cast bar spell name text
                 castBarSpellNameOffsetY = 0, -- vertical offset for the cast bar spell name text
-                threatGlow = true, -- show threat glow indicator (colored border)
+                threatGlow = false, -- show threat glow indicator (colored border); part of the Heritage art
                 tankMode = false, -- invert threat colors for a tank perspective (holding aggro = green)
                 dpsMode = false, -- ThreatPlates-style DPS threat colors (in combat); exclusive with tankMode
                 raidMarkHealthColor = false, -- tint health bar by raid marker, allies and enemies alike
@@ -1069,7 +1120,7 @@ local defaults = {
                 showDebuffCooldown = true, -- show remaining debuff time text on icons
                 debuffCooldownSwipe = true, -- also show a radial cooldown swipe on debuff icons
                 debuffCooldownSwipeStyle = "squareSwirl", -- "vertical" | "pie" | "squareSwirl"
-                debuffCooldownFontSize = 10, -- font size for debuff remaining time text
+                debuffCooldownFontSize = 13, -- font size for debuff remaining time text (retail: 0.55 of the icon)
                 debuffCooldownTextAnchor = "center", -- "center" | "topleft" | "topright" | "bottomleft" | "bottomright"
                 debuffOnlyTargetFocus = false, -- only show debuffs on target/focus plates
                 debuffOnlyMine = false, -- only show debuffs the player applied
@@ -1169,6 +1220,7 @@ local defaults = {
                 opacityNonTarget = 0.5, -- default non-target opacity
                 opacityFullNoTarget = true, -- when no target exists, use full target opacity
                 opacityFullParty = false, -- always show party/raid member nameplates at full opacity
+                onlyTargetPlates = false, -- hide hostile plates except the target and, in combat, NPCs attacking you
                 offsetX = 0, -- horizontal offset from the center of the screen
                 offsetY = 0, -- vertical offset from the center of the screen
                 clickboxWidthFactor = 1, -- width factor for the clickbox
@@ -1179,7 +1231,7 @@ local defaults = {
                 clampBoss = true, -- keep boss nameplates clamped in party/raid instances
                 clampTopInset = 40, -- distance below the screen top where a clamped plate stops
                 depthSortingEnabled = true, -- depth/Z-order sorting for overlapping plates
-                plateStyle = "legacy", -- "legacy" (the DragonUI art) | "modern" (retail chrome, still beta)
+                plateStyle = "modern", -- "modern" (retail chrome) | "legacy" (the DragonUI art, labelled Heritage)
                 retailSelectionBorder = true, -- white glowing border around the target's health bar
                 retailDeselectedOverlay = true, -- dim overlay on every plate that is not the target
                 retailMouseoverHighlight = true, -- additive wash over the bar while the plate is hovered
@@ -1244,6 +1296,7 @@ local defaults = {
                 position = "BOTTOM", -- BOTTOM|CENTER|TOP vertical placement on the icon
                 show_average = true, -- Average item level on the character/inspect panel
                 show_durability = false, -- Durability % on the character panel slots
+                show_repair_cost = false, -- Total repair cost of the equipped set in the character window
                 tooltip_cvar = false, -- Also set Blizzard's showItemLevel CVar (tooltip line)
                 -- Per-context toggles
                 bags = true,
@@ -1257,6 +1310,12 @@ local defaults = {
                 lootroll = true,
                 mail = true,
                 auction = true,
+            },
+            itemownership = {
+                enabled = false, -- Show per-character bag, bank and equipped counts in item tooltips
+            },
+            equipmentcompare = {
+                enabled = false, -- Compare equippable items without holding Shift; Ctrl suppresses it
             },
             chatmods = {
                 enabled = true, -- Chat enhancements: hide buttons, editbox position, URL copy, chat copy
@@ -1289,6 +1348,8 @@ local defaults = {
             loot_skin = {
                 enabled = true, -- Retail-style skin for the Blizzard loot window
                 animated_reflow = true, -- Compact collected loot with animated rows and panel resizing
+                auto_hide_empty = false, -- Close the loot window when there is nothing left to loot
+                auto_loot_hold = 0, -- Seconds auto-looted rows stay before flying out (0 = at once)
             },
             bagsort = {
                 enabled = true, -- Sort bags and bank items with buttons

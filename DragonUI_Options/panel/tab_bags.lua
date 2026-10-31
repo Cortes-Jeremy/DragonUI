@@ -358,25 +358,124 @@ local function BuildBagsTab(scroll)
     })
 
     -- ====================================================================
+    -- NEW ITEMS (stock bags + Bagster)
+    -- ====================================================================
+    local function GetBagsConfig(create)
+        if create and not addon.db.profile.bags then addon.db.profile.bags = {} end
+        return addon.db.profile.bags
+    end
+
+    local function SetNewItemsOption(key, val)
+        GetBagsConfig(true)[key] = val
+        if addon.NewItems then addon.NewItems:Refresh() end
+    end
+
+    local function NewItemsOff()
+        local bags = GetBagsConfig(false)
+        return (bags and bags.new_items == false) or false
+    end
+
+    -- Disabled states are read once at build time, so dependent toggles need the tab redrawn.
+    local function RedrawTab()
+        if Panel.currentTab then Panel:SelectTab(Panel.currentTab) end
+    end
+
+    local newItemsSection = C:AddSection(scroll, LO["New Items"])
+
+    C:AddToggle(newItemsSection, {
+        label = LO["Highlight New Items"],
+        desc = LO["Make items you just looted, bought, crafted or received glow in the inventory until you hover them."],
+        getFunc = function()
+            local bags = GetBagsConfig(false)
+            return not bags or bags.new_items ~= false
+        end,
+        setFunc = function(val)
+            SetNewItemsOption("new_items", val)
+            RedrawTab()
+        end,
+    })
+
+    C:AddDropdown(newItemsSection, {
+        label = LO["Glow Style"],
+        values = {
+            border = LO["Border"],
+            starburst = LO["Starburst"],
+        },
+        getFunc = function()
+            local bags = GetBagsConfig(false)
+            return (bags and bags.new_glow_style) or "border"
+        end,
+        setFunc = function(val) SetNewItemsOption("new_glow_style", val) end,
+        disabled = NewItemsOff,
+        width = 180,
+    })
+
+    C:AddDropdown(newItemsSection, {
+        label = LO["Glow Color"],
+        values = {
+            quality = LO["Item Quality"],
+            user = LO["Custom"],
+        },
+        getFunc = function()
+            local bags = GetBagsConfig(false)
+            return (bags and bags.new_glow_color_mode) or "quality"
+        end,
+        setFunc = function(val)
+            SetNewItemsOption("new_glow_color_mode", val)
+            RedrawTab()
+        end,
+        disabled = NewItemsOff,
+        width = 180,
+    })
+
+    C:AddColorPicker(newItemsSection, {
+        label = LO["Custom Glow Color"],
+        hasAlpha = true,
+        getFunc = function()
+            local bags = GetBagsConfig(false)
+            local c = bags and bags.new_glow_color
+            if type(c) ~= "table" then return 1, 1, 1, 1 end
+            return c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
+        end,
+        setFunc = function(r, g, b, a) SetNewItemsOption("new_glow_color", { r, g, b, a or 1 }) end,
+        disabled = function()
+            local bags = GetBagsConfig(false)
+            return NewItemsOff() or not (bags and bags.new_glow_color_mode == "user")
+        end,
+    })
+
+    C:AddToggle(newItemsSection, {
+        label = LO["Clear When Bags Close"],
+        desc = LO["Closing a bag removes its new-item glows. When off, a glow only goes away when you hover the item."],
+        getFunc = function()
+            local bags = GetBagsConfig(false)
+            return not bags or bags.new_clear_on_close ~= false
+        end,
+        setFunc = function(val) SetNewItemsOption("new_clear_on_close", val) end,
+        disabled = NewItemsOff,
+    })
+
+    C:AddToggle(newItemsSection, {
+        label = LO["Ignore Poor Quality Items"],
+        desc = LO["Never mark gray (poor quality) items as new."],
+        getFunc = function()
+            local bags = GetBagsConfig(false)
+            return bags and bags.new_ignore_junk
+        end,
+        setFunc = function(val) SetNewItemsOption("new_ignore_junk", val) end,
+        disabled = NewItemsOff,
+    })
+
+    -- ====================================================================
     -- BAG SORT
     -- ====================================================================
     local sortSection = C:AddSection(scroll, LO["Bag Sort"] or "Bag Sort")
     C:AddDescription(sortSection, LO["Sort buttons for bags and bank. Sorts items by type, rarity, level, and name."] or "Sort buttons for bags and bank. Sorts items by type, rarity, level, and name.")
 
-    C:AddToggle(sortSection, {
+    C:AddModuleToggle(sortSection, {
         label = LO["Enable Bag Sort"] or "Enable Bag Sort",
         desc = LO["Add sort buttons to bag and bank frames. Also enables /sort and /sortbank slash commands."] or "Add sort buttons to bag and bank frames. Also enables /sort and /sortbank slash commands.",
-        getFunc = function()
-            local mc = GetBagSortConfig(false)
-            return mc and mc.enabled
-        end,
-        setFunc = function(val)
-            local cfg = GetBagSortConfig(true)
-            if cfg then
-                cfg.enabled = val
-            end
-        end,
-        requiresReload = true,
+        moduleName = "bagsort",
     })
 
     C:AddToggle(sortSection, {
@@ -515,21 +614,50 @@ local function BuildBagsTab(scroll)
         end,
     })
 
+    local knownCharacters = addon.GetKnownCharacters and addon.GetKnownCharacters() or {}
+    local noKnownCharacters = function() return next(knownCharacters) == nil end
+    local forgetKey
+    C:AddDropdown(altMoneySection, {
+        label = LO["Character"],
+        values = knownCharacters,
+        width = 220,
+        getFunc = function() return forgetKey end,
+        setFunc = function(val) forgetKey = val end,
+        disabled = noKnownCharacters,
+    })
+    C:AddButton(altMoneySection, {
+        label = LO["Forget Character"],
+        desc = LO["Delete the selected character's saved gold, item counts and offline bank. Your current character is never listed."],
+        disabled = noKnownCharacters,
+        callback = function()
+            if not (forgetKey and knownCharacters[forgetKey]) then return end
+            StaticPopupDialogs["DRAGONUI_FORGET_CHARACTER"] = StaticPopupDialogs["DRAGONUI_FORGET_CHARACTER"] or {
+                text = LO["Forget all saved data of %s?"],
+                button1 = LO["Yes"],
+                button2 = LO["No"],
+                OnAccept = function(_, key)
+                    local realm, name = string.match(key or "", "^(.-)|(.+)$")
+                    if name and addon.ForgetCharacter then addon.ForgetCharacter(realm, name) end
+                    if Panel and Panel.SelectTab then Panel:SelectTab("bags") end
+                end,
+                timeout = 0,
+                whileDead = true,
+                hideOnEscape = true,
+                preferredIndex = 3,
+            }
+            StaticPopup_Show("DRAGONUI_FORGET_CHARACTER", knownCharacters[forgetKey], nil, forgetKey)
+        end,
+    })
+
     -- ====================================================================
     -- BAGSTER ENABLE
     -- ====================================================================
     local mainSection = C:AddSection(scroll, LO["Bagster"])
 
-    C:AddToggle(mainSection, {
+    C:AddModuleToggle(mainSection, {
         label = LO["Enable Bagster"],
         desc = LO["All-in-one bag replacement with item filtering, search, quality indicators, and bank integration."],
-        getFunc = function() return IsBagsterEnabled() end,
-        setFunc = function(val)
-            if not addon.db.profile.modules then addon.db.profile.modules = {} end
-            if not addon.db.profile.modules.bagster then addon.db.profile.modules.bagster = {} end
-            addon.db.profile.modules.bagster.enabled = val
-        end,
-        requiresReload = true,
+        moduleName = "bagster",
     })
 
     -- Everything below is Bagster-only; the enable toggle reloads, so the panel rebuilds right

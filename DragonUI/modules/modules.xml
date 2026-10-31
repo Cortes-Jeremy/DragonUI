@@ -47,7 +47,8 @@
     <Include file="unitframes\unitframes.xml"/>
     
     <!-- Cast Bar module -->
-    <Script file="castbar.lua"/>               
+    <Script file="castbar.lua"/>
+    <Script file="gcd.lua"/>
     
     <!-- Game Menu module -->
     <Script file="gamemenu_dragons.lua"/>
@@ -72,6 +73,12 @@
 
     <!-- Item Level on gear icons -->
     <Script file="itemlevel.lua"/>
+
+    <!-- Per-character bag, bank and equipped counts in item tooltips -->
+    <Script file="itemownership.lua"/>
+
+    <!-- Automatic equipped-item comparison, including chat item links -->
+    <Script file="equipmentcompare.lua"/>
 
     <!-- Retail-style character window reskin -->
     <Include file="characterpanel\characterpanel.xml"/>
@@ -98,6 +105,9 @@
     
     <!-- Bag item usability tint (shared by bagster and bags_skin; must load before both) -->
     <Script file="bags_usability.lua"/>
+
+    <!-- Retail new-item glow (shared by bagster and bags_skin; must load before both) -->
+    <Script file="bags_newitems.lua"/>
 
     <!-- Bagster bag replacement module -->
     <Include file="bagster\bagster.xml"/>
@@ -134,6 +144,9 @@
 
     <!-- Auto-accept party invites from friends and guild members -->
     <Script file="autoaccept.lua"/>
+
+    <!-- Max camera distance past the Interface slider -->
+    <Script file="camera.lua"/>
 
     <!-- Addon Manager module -->
     <Script file="addonmanager_icons.lua"/>

@@ -67,6 +67,8 @@ end
 -- True only during an active guild bank sort; doesn't affect bag/bank sorting.
 local guildBankSortActive = false
 local GUILDBANK_MOVE_THROTTLE = 0.4
+-- A whole round of disjoint moves in one frame trips server packet-flood kicks on big bank sorts.
+local MAX_MOVES_PER_TICK = 3
 
 local function GetSortMoveInterval()
     local cfg = GetModuleConfig()
@@ -1131,7 +1133,7 @@ local function ReverseStackEnabled()
     return cfg and cfg.reverse_stack
 end
 
--- Moves planned in one round touch disjoint slots, so the executor can issue them in a single tick.
+-- Moves planned in one round touch disjoint slots, so the executor can issue several per tick.
 local function ArrangePool(bags)
     local order = UnlockedCells(bags)
     local total = #order
@@ -1208,8 +1210,10 @@ local function IssueNextMoves()
         awaitedDrop = nil
     end
 
+    local issued = 0
     while nextMoveIndex <= #plannedMoves do
-        if CursorHasItem() then return end
+        if CursorHasItem() or issued >= MAX_MOVES_PER_TICK then return end
+        issued = issued + 1
         local move = plannedMoves[nextMoveIndex]
         local fromBag, fromSlot, toBag, toSlot = move.fromBag, move.fromSlot, move.toBag, move.toSlot
         if IsSlotBusy(fromBag, fromSlot) or IsSlotBusy(toBag, toSlot) then return end
@@ -1403,6 +1407,9 @@ end
 -- BUTTON CREATION HELPERS
 -- ============================================================================
 
+-- Retail INV_Pet_Broom, the art behind retail's bag cleanup button; the 3.3.5a client has no broom icon.
+local SORT_ICON_TEXTURE = "Interface\\AddOns\\DragonUI\\Textures\\UI\\BagSortBroom"
+
 local function CreateActionButton(name, parent, onClick, tooltipTitle, scale, iconPath, tooltipLines)
     scale = scale or 1.0
     local size = 32 * scale
@@ -1414,7 +1421,7 @@ local function CreateActionButton(name, parent, onClick, tooltipTitle, scale, ic
     -- Icon fills the button
     local icon = btn:CreateTexture(name .. "Icon", "ARTWORK")
     icon:SetAllPoints()
-    icon:SetTexture(iconPath or "Interface\\Icons\\INV_Enchant_EssenceCosmicGreater")
+    icon:SetTexture(iconPath or SORT_ICON_TEXTURE)
     icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     btn.icon = icon
 
@@ -1484,7 +1491,7 @@ local function CreateSortButton(name, parent, onClick, tooltipText, scale)
         onClick,
         tooltipText,
         scale,
-        "Interface\\Icons\\INV_Enchant_EssenceCosmicGreater",
+        SORT_ICON_TEXTURE,
         BuildTooltipLines
     )
 end
@@ -1753,7 +1760,7 @@ local function CreateGuildBankSortButton(name, parent)
         SortGuildBankTab,
         T("Sort Guild Bank Tab", "Sort Guild Bank Tab"),
         0.61,
-        "Interface\\Icons\\INV_Enchant_EssenceCosmicGreater",
+        SORT_ICON_TEXTURE,
         BuildTooltipLines
     )
 end

@@ -21,9 +21,11 @@ local CLIP_TOP = 6
 local SECONDARY = { "Cooking", "Fishing", "FirstAid" }
 -- The book's ProfessionsRankBarTemplate overrides: an 18-high frame with its 23-high art hanging from the top.
 local BAR_W, SMALL_BAR_W = 441, 190
-local FRAME_H, ART_H, FILL_H = 18, 23, 18
+-- FILL_H is one short of the template's: with no mask, the art's soft last row would show below the frame.
+local FRAME_H, ART_H, FILL_H = 18, 23, 17
 -- overrideMaskRightOffset per width: the mask stops this short of bar width x progress.
-local MASK_OFFSET = { [BAR_W] = -7, [SMALL_BAR_W] = -5 }
+-- Not Forever's -5 on the small bar: its three-sliced frame keeps the rim 3 in, so -5 ran past it.
+local MASK_OFFSET = { [BAR_W] = -7, [SMALL_BAR_W] = -7 }
 
 -- GameFontHighlightSmall2 (11 pt) does not exist in 3.3.5a.
 local missingFont = CreateFont("DragonUI_ProfessionsMissingFont")
